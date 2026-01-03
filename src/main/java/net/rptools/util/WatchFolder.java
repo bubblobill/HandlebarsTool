@@ -1,5 +1,6 @@
 package net.rptools.util;
 
+import net.rptools.data.Config;
 import net.rptools.data.Constants;
 import org.apache.commons.lang3.ThreadUtils;
 import org.slf4j.Logger;
@@ -141,19 +142,23 @@ public class WatchFolder {
     };
 
     private void initialise() {
-        STATE.set(Constants.State.STARTING);
-        watchFuture = CompletableFuture.supplyAsync(VALIDATE_FOLDER)
-                .handleAsync(handle)
-                .thenApplyAsync(CREATE_SERVICE)
-                .handleAsync(handle)
-                .thenApplyAsync(SCAN_FOLDERS)
-                .handleAsync(handle)
-                .thenApplyAsync(REGISTER_FOLDERS)
-                .handleAsync(handle);
-        try {
-            STATE.set(watchFuture.get());
-        } catch (InterruptedException | ExecutionException e) {
-            Utils.whoops(e);
+        if(Config.getBoolean(Config.WATCH_FOLDER)) {
+            STATE.set(Constants.State.STARTING);
+            watchFuture = CompletableFuture.supplyAsync(VALIDATE_FOLDER)
+                    .handleAsync(handle)
+                    .thenApplyAsync(CREATE_SERVICE)
+                    .handleAsync(handle)
+                    .thenApplyAsync(SCAN_FOLDERS)
+                    .handleAsync(handle)
+                    .thenApplyAsync(REGISTER_FOLDERS)
+                    .handleAsync(handle);
+            try {
+                STATE.set(watchFuture.get());
+            } catch (InterruptedException | ExecutionException e) {
+                Utils.whoops(e);
+                STATE.set(Constants.State.FAILED);
+            }
+        } else {
             STATE.set(Constants.State.FAILED);
         }
     }

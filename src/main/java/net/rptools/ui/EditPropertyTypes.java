@@ -150,7 +150,7 @@ public class EditPropertyTypes extends JDialog {
     private void onImport(ActionEvent e) {
         SwingUtilities.invokeLater(() -> {
             ImportCampaign.importProps(this.getParent());
-            Main.getLauncher().onEditData(new ActionEvent(Main.getLauncher(), 1, null));
+            Main.getLauncher().onEditData();
         });
         onOK();
     }

@@ -69,19 +69,15 @@ public class TestingServer {
             Servlet pageServlet = new TestServlet(template);
             ServletHolder pageServletHolder = new ServletHolder("TestServletHolder", pageServlet);
 
-            SSEServlet sseServlet = new SSEServlet();
-            ServletHolder sseServletHolder = new ServletHolder("SSEServletHolder", sseServlet);
 
             WebAppContext root = new WebAppContext();
             root.setErrorHandler(Utils.errorHandlerSupplier.get());
             root.setPersistTempDirectory(false);
-            root.setTempDirectory(SessionHandling.getTempFolder());
             root.setLogger(null);
             root.setParentLoaderPriority(true);
             root.setContextPath(TemplateLoader.DEFAULT_PREFIX);
             root.setResourceBase(FOLDER.getAbsolutePath());
             root.addServlet(pageServletHolder, "*" + TemplateLoader.DEFAULT_SUFFIX);
-            root.addServlet(sseServletHolder, "/sse");
 
             // prevent jetty from loading the webapp web.xml
             root.setConfigurations(new Configuration[]{new WebXmlConfiguration() {
@@ -98,9 +94,13 @@ public class TestingServer {
                     log.info("Testing server started on port {}. http://localhost:{}/testSpace{}", Config.getInt(Config.SERVER_PORT), Config.getInt(Config.SERVER_PORT), TemplateLoader.DEFAULT_SUFFIX);
                 }
             });
-            HandlerList handlerList = new HandlerList(root, SessionHandling.fileSessionHandler());
-            server.setHandler(handlerList);
-            sseServlet.setServer(server);
+            server.setHandler(root);
+            if(Config.getBoolean(Config.WATCH_FOLDER)) {
+                SSEServlet sseServlet = new SSEServlet();
+                ServletHolder sseServletHolder = new ServletHolder("SSEServletHolder", sseServlet);
+                root.addServlet(sseServletHolder, "/sse");
+                sseServlet.setServer(server);
+            }
 
         } catch (IOException e) {
             throw new RuntimeException(e);

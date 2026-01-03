@@ -2,10 +2,9 @@ plugins {
     id 'java'
     id 'base'
     id 'idea'
-//    id("com.gradleup.shadow") version("9.3.0")
     id 'application'
     id 'distribution'
-    id("org.beryx.jlink") version "3.2.0"
+    id 'org.beryx.runtime' version '2.0.1'
 }
 
 repositories {
@@ -30,15 +29,14 @@ java {
         languageVersion = JavaLanguageVersion.of(24)
     }
 }
-
-configurations {
-    antTask
-}
+//
+//configurations {
+//    antTask
+//}
 
 dependencies {
 
-    implementation("org.beryx.jlink:org.beryx.jlink.gradle.plugin:3.2.0")
-//    implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.3.0")
+//    implementation("org.beryx.runtime:org.beryx.runtime.gradle.plugin:2.0.1")
 
     implementation 'com.github.jknack:handlebars-proto:4.3.1'
     implementation 'com.github.jknack:handlebars-helpers:4.3.1'
@@ -46,7 +44,7 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.21.2'
 
     implementation 'com.jetbrains.intellij.java:java-gui-forms-rt:241.12019'
-    antTask 'com.jetbrains.intellij.java:java-compiler-ant-tasks:233.14475.56'
+//    antTask 'com.jetbrains.intellij.java:java-compiler-ant-tasks:233.14475.56'
 
     implementation 'org.apache.logging.log4j:log4j-core:2.25.3'
     implementation 'org.apache.logging.log4j:log4j-api:2.25.3'
@@ -57,18 +55,64 @@ jar {
         attributes 'Main-Class': 'net.rptools.Main'
     }
 }
-//shadowJar {
-//    manifest {
-//        attributes 'Main-Class': 'net.rptools.Main'
-//    }
+//tasks.register('createWrapper', Wrapper) {
+//    gradleVersion = '9.0.0'
 //}
-jlink {
-    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages', "--output myruntime"]
-    launcher{
-        name = 'HandlebarsTool'
-        jvmArgs = ['-Dlog4j.configurationFile=./log4j2.xml']
+runtime {
+    options = ['--strip-native-commands',
+               '--strip-debug',
+               '--compress',
+               '2',
+               '--no-header-files',
+               '--no-man-pages'
+    ]
+
+// Uncomment and adjust the code below if you want to generate images for multiple platforms.
+// (You need to also uncomment the line 'targetPlatformName = ...' in the jpackage block.)
+
+//    targetPlatform("lin") {
+//        jdkHome = jdkDownload("https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.2%2B7/OpenJDK15U-jdk_x64_linux_hotspot_15.0.2_7.tar.gz")
+//    }
+//
+//    targetPlatform("mac") {
+//        jdkHome = jdkDownload("https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.2%2B7/OpenJDK15U-jdk_x64_mac_hotspot_15.0.2_7.tar.gz") {
+//            downloadDir = "$buildDir/mac"
+//            archiveName = "mac-jdk"
+//            archiveExtension = "tar.gz"
+//            pathToHome = "jdk-15.0.2+7/Contents/Home"
+//            overwrite = true
+//        }
+//    }
+
+    targetPlatform("win") {
+        jdkHome = jdkDownload("https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.2%2B7/OpenJDK15U-jdk_x64_windows_hotspot_15.0.2_7.zip")
     }
-}
-tasks.register('createWrapper', Wrapper) {
-    gradleVersion = '9.0.0'
+
+
+    launcher {
+        noConsole = true
+    }
+    jpackage {
+        // Uncomment and adjust the following line if your runtime task is configured to generate images for multiple platforms
+        targetPlatformName = "win"
+
+        def currentOs = org.gradle.internal.os.OperatingSystem.current()
+        def imgType = currentOs.windows ? 'ico' : currentOs.macOsX ? 'icns' : 'png'
+        imageOptions += ['--icon', "src/main/resources/icon.$imgType"]
+        installerOptions += ['--resource-dir', "src/main/resources"]
+        installerOptions += ['--vendor', 'Reverend']
+        installerOptions += ['--type', 'app-image']
+        installerOptions += ['--app-version', version]
+        installerOptions += ['--dest', "runtime"]
+
+//        if(currentOs.windows) {
+//            installerOptions += ['--win-per-user-install', '--win-dir-chooser', '--win-menu', '--win-shortcut']
+//        }
+//        else if (currentOs.linux) {
+//            installerOptions += ['--linux-package-name', 'HandlebarsTool','--linux-shortcut']
+//        }
+//        else if (currentOs.macOsX) {
+//            installerOptions += ['--mac-package-name', 'HandlebarsTool']
+//        }
+    }
 }
