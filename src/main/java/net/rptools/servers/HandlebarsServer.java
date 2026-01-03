@@ -186,7 +186,7 @@ public class HandlebarsServer {
     public Function<String, String> getTemplateText = requestURI -> {
         try (FileInputStream in = new FileInputStream(Config.getPath(Config.TEMPLATE_FOLDER).resolve(requestURI.substring(1)).toFile())) {
             byte[] data = in.readAllBytes();
-            return new String(data, StandardCharsets.ISO_8859_1);
+            return new String(data, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error(e.getLocalizedMessage(), e);
             return "<html lang=\"en-AU\"><body><div id=\"statSheet\" class=\"statSheet-bottomLeft\"><img src=\"./Images/fallback.gif\" alt=\"D'oh!\"/></div></body></html>";

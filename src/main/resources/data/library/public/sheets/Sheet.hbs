@@ -24,7 +24,7 @@
        height="{{portraitHeight}}"
      alt="D'oh!"/>
 
-    <div id="name" class="name">{{name}}</div>
+    <div id="name" class="name">{{{name}}}</div>
 
     {{#if properties~}}
     <div id="stats" class="stats">
@@ -32,12 +32,12 @@
         <div class="entry">
            <div class="feature {{#if this.gmOnly}}gm-only{{/if}}">
             {{~#if this.shortName}}
-              {{~this.shortName~}}
+                {{{this.shortName}}}
             {{~else}}
-              {{~this.displayName~}}
+                {{{this.displayName}}}
             {{~/if}}
             </div>
-            <div class="value">{{~this.value~}}</div>
+            <div class="value">{{{this.value}}}</div>
         </div>
     {{~/each}}
     </div>

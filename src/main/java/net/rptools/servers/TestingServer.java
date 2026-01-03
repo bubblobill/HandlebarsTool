@@ -1,5 +1,6 @@
 package net.rptools.servers;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.jknack.handlebars.*;
 import com.github.jknack.handlebars.io.ClassPathTemplateLoader;
 import com.github.jknack.handlebars.io.TemplateLoader;
@@ -25,6 +26,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static net.rptools.data.Constants.OBJECT_MAPPER;
@@ -33,7 +35,7 @@ import static net.rptools.data.Constants.TEMPLATE_DATA;
 public class TestingServer {
     private static final Logger log = LoggerFactory.getLogger(TestingServer.class);
 
-
+    private static final ObjectNode DATASETS = Config.getObjectNode(Config.DATASETS);
     private static final String RESOURCE_FOLDER = "/testSpace";
     private static final String PATH_PREFIX = "testSpace";
     private static final URLTemplateLoader TEMPLATE_LOADER = new ClassPathTemplateLoader();
@@ -59,6 +61,7 @@ public class TestingServer {
             TEMPLATE_DATA.put("theme", Config.getString(Config.THEME));
             TEMPLATE_DATA.put("background", Config.getString(Config.BACKGROUND));
             TEMPLATE_DATA.put("viewAs", Config.getString(Config.VIEW_AS));
+            addDataSet();
 
             TEMPLATE_LOADER.setPrefix(RESOURCE_FOLDER);
 
@@ -122,7 +125,12 @@ public class TestingServer {
             log.warn("Can't stop the Testing server", ex);
         }
     }
-
+    public void addDataSet() {
+        ObjectNode node = (ObjectNode) DATASETS.get(Config.getString(Config.DATASET_NAME));
+        node.fieldNames().forEachRemaining(fieldName ->{
+            TEMPLATE_DATA.set(fieldName, node.get(fieldName));
+        });
+    }
 
     public static final Supplier<Runnable> testServerRunnable = () -> () -> {
         TestingServer testingServer = new TestingServer();

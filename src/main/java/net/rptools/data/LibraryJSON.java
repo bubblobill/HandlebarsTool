@@ -23,10 +23,10 @@ public class LibraryJSON {
     private static final ArrayNode libArray = OBJECT_MAPPER.createArrayNode();
     private static final Map<String, ObjectNode> LOOKUP = new HashMap<>();
     private static Path jsonFilePath;
-    private static boolean useLibFile = true;
+
 
     static void createLibFile() {
-        if (!useLibFile) {
+        if (!Config.getBoolean(Config.LIB_FILE)) {
             return;
         }
         if (Utils.prompt(null, "Create associated Add-On JSON file in root folder?")) {
@@ -37,15 +37,15 @@ public class LibraryJSON {
             } catch (Exception e) {
                 Utils.whoops(e);
                 log.error(e.getLocalizedMessage(), e);
-                useLibFile = false;
+                Config.set(Config.LIB_FILE, false);
             }
         } else {
-            useLibFile = false;
+            Config.set(Config.LIB_FILE, false);
         }
     }
 
     static void writeLibFile() {
-        if (!useLibFile) {
+        if (!Config.getBoolean(Config.LIB_FILE)) {
             return;
         }
         try {
@@ -54,7 +54,7 @@ public class LibraryJSON {
         } catch (Exception e) {
             Utils.whoops(e);
             log.error(e.getLocalizedMessage(), e);
-            useLibFile = false;
+            Config.set(Config.LIB_FILE, false);
         }
     }
 
@@ -123,8 +123,5 @@ public class LibraryJSON {
 
         });
         writeLibFile();
-    }
-    public static boolean isUseLibFile() {
-        return useLibFile;
     }
 }

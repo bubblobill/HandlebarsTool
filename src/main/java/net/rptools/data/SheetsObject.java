@@ -49,27 +49,25 @@ public class SheetsObject {
     }
 
     private static final Executor DELAYED_EXECUTOR = CompletableFuture.delayedExecutor(80, TimeUnit.MILLISECONDS);
-    public static final PropertyChangeListener propertyChangeListener = _ -> {
-        DELAYED_EXECUTOR.execute(() -> {
-            while (!WatchFolder.getQueue().isEmpty()) {
-                Path p = WatchFolder.getQueue().poll();
-                if (p.toFile().exists()) {
-                    if (p.toFile().isDirectory()) {
-                        PATH_LIST.addAll(new Phantom(p).getPaths());
-                    } else if (p.getFileName().endsWith(".hbs") && !PATH_LIST.contains(p)) {
-                        PATH_LIST.add(p);
-                    }
-                } else {
-                    PATH_LIST.removeIf(path -> path.startsWith(p));
-                    PATH_LIST.remove(p);
+    public static final PropertyChangeListener propertyChangeListener = _ -> DELAYED_EXECUTOR.execute(() -> {
+        while (!WatchFolder.getQueue().isEmpty()) {
+            Path p = WatchFolder.getQueue().poll();
+            if (p.toFile().exists()) {
+                if (p.toFile().isDirectory()) {
+                    PATH_LIST.addAll(new Phantom(p).getPaths());
+                } else if (p.getFileName().endsWith(".hbs") && !PATH_LIST.contains(p)) {
+                    PATH_LIST.add(p);
                 }
+            } else {
+                PATH_LIST.removeIf(path -> path.startsWith(p));
+                PATH_LIST.remove(p);
             }
-            PATH_LIST.sort(Comparator.naturalOrder());
-            buildJson(PATH_LIST.getFirst());
-            setWatchChange(true);
-            log.info("SheetsObject rebuilt");
-        });
-    };
+        }
+        PATH_LIST.sort(Comparator.naturalOrder());
+        buildJson(PATH_LIST.getFirst());
+        setWatchChange(true);
+        log.info("SheetsObject rebuilt");
+    });
 
     public static boolean setFolder(Path folder_) {
         File f = folder_.toFile();
@@ -77,7 +75,7 @@ public class SheetsObject {
         if (f.exists() && f.isDirectory()) {
             PATH_LIST.clear();
             folder = folder_;
-            if (LibraryJSON.isUseLibFile()) {
+            if (Config.getBoolean(Config.LIB_FILE)){
                 LibraryJSON.setJsonFilePath(folder_);
             }
             Config.set(Config.TEMPLATE_FOLDER, folder_.toString());
@@ -105,7 +103,7 @@ public class SheetsObject {
                 sheet.set("propertyTypes", OBJECT_MAPPER.createArrayNode());
                 arrayNode.add(sheet);
             }
-            if (LibraryJSON.isUseLibFile()) {
+            if (Config.getBoolean(Config.LIB_FILE)) {
                 LibraryJSON.addSheets(arrayNode);
             }
         }

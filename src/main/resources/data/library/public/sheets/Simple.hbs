@@ -1,9 +1,9 @@
 <html lang="en-AU">
 <head>
-    <link
-            rel="stylesheet"
-            href="lib://net.rptools.maptool/css/mt-stat-sheet.css"
-    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, height=device-height, user-scalable=0, initial-scale=1" />
+    <link rel="stylesheet" href="lib://net.rptools.maptool/css/mt-stat-sheet.css" />
+    <link rel="stylesheet" href="./css/generic.css" />
     <link rel="stylesheet" href="./css/simple.css"/>
     <title></title>
 </head>
@@ -38,15 +38,15 @@
             {{#each properties}}
                 {{#if this.gmOnly}}
                     {{#if this.shortName}}
-                        <li class="gmProperty">{{this.displayName}}({{this.shortName}}): {{this.value}}</li>
+                        <li class="gmProperty">{{{this.displayName}}}({{{this.shortName}}}): {{{this.value}}}</li>
                     {{else}}
-                        <li class="gmProperty">{{this.displayName}}: {{this.value}}</li>
+                        <li class="gmProperty">{{{this.displayName}}}: {{{this.value}}}</li>
                     {{/if}}
                 {{else}}
                     {{#if this.shortName}}
-                        <li class="playerProperty">{{this.displayName}}({{this.shortName}}): {{this.value}}</li>
+                        <li class="playerProperty">{{{this.displayName}}}({{{this.shortName}}}): {{{this.value}}}</li>
                     {{else}}
-                        <li class="playerProperty">{{this.displayName}}: {{this.value}}</li>
+                        <li class="playerProperty">{{{this.displayName}}}: {{{this.value}}}</li>
                     {{/if}}
                 {{/if}}
             {{/each}}
