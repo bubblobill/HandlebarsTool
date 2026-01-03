@@ -67,14 +67,14 @@ public class ConfigStore {
         DEFAULTS.set(RESET, JsonNodeFactory.instance.booleanNode(false));
         DEFAULTS.set(BACKGROUND, JsonNodeFactory.instance.textNode("Textures/Grass.png"));
         DEFAULTS.set(DATASET_NAME, JsonNodeFactory.instance.textNode("Basic"));
-        DEFAULTS.set(DATASET_DEFAULT, JsonNodeFactory.instance.textNode("Default"));
+        DEFAULTS.set(DATASET_DEFAULT, JsonNodeFactory.instance.textNode("Basic"));
         DEFAULTS.set(HANDLEBARS_PORT, JsonNodeFactory.instance.numberNode(6781));
         DEFAULTS.set(SERVER_PORT, JsonNodeFactory.instance.numberNode(7891));
-        DEFAULTS.set(SHEET, JsonNodeFactory.instance.textNode(null));
+        DEFAULTS.set(LOCATION, JsonNodeFactory.instance.textNode(Constants.StatSheetLocation.BOTTOM_LEFT.className()));
+        DEFAULTS.set(SHEET, JsonNodeFactory.instance.textNode("Simple"));
         DEFAULTS.set(THEME, JsonNodeFactory.instance.textNode("Aah"));
         DEFAULTS.set(TEMPLATE_FOLDER, JsonNodeFactory.instance.textNode(System.getProperty("user.home")));
-        DEFAULTS.set(LIB_FILE, JsonNodeFactory.instance.nullNode());
-        DEFAULTS.set(LOCATION, JsonNodeFactory.instance.textNode(Constants.StatSheetLocation.BOTTOM_LEFT.className()));
+        DEFAULTS.set(LIB_FILE, JsonNodeFactory.instance.booleanNode(false));
         DEFAULTS.set(VIEW_AS, JsonNodeFactory.instance.textNode("player"));
         DEFAULTS.set(WATCH_FOLDER, JsonNodeFactory.instance.booleanNode(true));
 

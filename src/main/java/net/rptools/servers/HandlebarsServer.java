@@ -184,7 +184,6 @@ public class HandlebarsServer {
     }
 
     public Function<String, String> getTemplateText = requestURI -> {
-
         try (FileInputStream in = new FileInputStream(Config.getPath(Config.TEMPLATE_FOLDER).resolve(requestURI.substring(1)).toFile())) {
             byte[] data = in.readAllBytes();
             return new String(data, StandardCharsets.ISO_8859_1);
