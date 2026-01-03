@@ -1,0 +1,217 @@
+/*
+This is here for reference purposes.
+It is different for every theme and is affected by user preferences.
+Don't bother changing it as it won't have any effect.
+To trial different setups fiddle with settings elsewhere.
+
+You can over-ride these values in your own CSS. Doing so may make life unpleasant for others though.
+
+*/
+:root {
+  --mt-theme-color-actions-blue: rgba(56, 159, 214, 1.00);
+  --mt-theme-color-actions-blue-dark: rgba(56, 159, 214, 1.00);
+  --mt-theme-color-actions-green: rgba(89, 168, 105, 1.00);
+  --mt-theme-color-actions-green-dark: rgba(89, 168, 105, 1.00);
+  --mt-theme-color-actions-grey: rgba(110, 110, 110, 1.00);
+  --mt-theme-color-actions-grey-dark: rgba(110, 110, 110, 1.00);
+  --mt-theme-color-actions-grey-inline: rgba(127, 139, 145, 1.00);
+  --mt-theme-color-actions-grey-inline-dark: rgba(127, 139, 145, 1.00);
+  --mt-theme-color-actions-red: rgba(219, 88, 96, 1.00);
+  --mt-theme-color-actions-red-dark: rgba(219, 88, 96, 1.00);
+  --mt-theme-color-actions-yellow: rgba(237, 162, 0, 1.00);
+  --mt-theme-color-actions-yellow-dark: rgba(237, 162, 0, 1.00);
+  --mt-theme-color-objects-black-text: rgba(35, 31, 32, 1.00);
+  --mt-theme-color-objects-blue: rgba(64, 182, 224, 1.00);
+  --mt-theme-color-objects-green: rgba(98, 181, 67, 1.00);
+  --mt-theme-color-objects-green-android: rgba(164, 198, 57, 1.00);
+  --mt-theme-color-objects-grey: rgba(154, 167, 176, 1.00);
+  --mt-theme-color-objects-pink: rgba(249, 139, 158, 1.00);
+  --mt-theme-color-objects-red: rgba(242, 101, 34, 1.00);
+  --mt-theme-color-objects-red-status: rgba(224, 85, 85, 1.00);
+  --mt-theme-color-objects-yellow: rgba(244, 175, 61, 1.00);
+  --mt-theme-color-objects-yellow-dark: rgba(217, 163, 67, 1.00);
+
+  --mt-theme-font-size: 12px;
+  --mt-theme-font-family: Segoe UI;
+
+  --mt-theme-color-foreground: rgba(0, 0, 0, 1.00);
+  --mt-theme-color-background: rgba(242, 242, 242, 1.00);
+  --mt-theme-color-foreground-disabled: rgba(140, 140, 140, 1.00);
+
+  --mt-theme-color-button-start-background: rgba(246, 246, 244, 1.00);
+  --mt-theme-color-button-end-background: rgba(201, 201, 198, 1.00);
+  --mt-theme-color-button-foreground: rgba(31, 31, 20, 1.00);
+  --mt-theme-color-button-background-disabled: rgba(194, 194, 163, 1.00);
+  --mt-theme-color-button-foreground-disabled: rgba(140, 140, 140, 1.00);
+  --mt-theme-color-button-pressed-background: rgba(194, 194, 163, 1.00);
+  --mt-theme-color-button-background-hover: rgba(154, 154, 101, 1.00);
+  --mt-theme-color-button-disabled-border-size: 0px;
+  --mt-theme-color-button-disabled-border-color: rgba(168, 168, 153, 1.00);
+
+  --mt-theme-color-text-input-foreground: rgba(0, 0, 0, 1.00);
+  --mt-theme-color-text-input-background: rgba(255, 255, 255, 1.00);
+  --mt-theme-color-text-input-disabled-border-size: 1px;
+  --mt-theme-color-text-input-disabled-border-color: rgba(140, 140, 140, 1.00);
+
+  --mt-theme-h1-font-family: Segoe UI Semibold;
+  --mt-theme-h1-font-size: 24px;
+
+  --mt-theme-h2-font-family: Segoe UI Semibold;
+  --mt-theme-h2-font-size: 18px;
+
+  --mt-theme-h3-font-family: Segoe UI Semibold;
+  --mt-theme-h3-font-size: 15px;
+
+  --mt-theme-h4-font-family: Segoe UI;
+  --mt-theme-h4-font-size: 12px;
+
+  --mt-theme-h5-font-family: Segoe UI;
+  --mt-theme-h5-font-size: 12px;
+
+  --mt-theme-h6-font-family: Segoe UI;
+  --mt-theme-h6-font-size: 12px;
+
+
+  --mt-theme-panel-background: rgba(237, 234, 217, 1.00);
+  --mt-theme-panel-foreground: rgba(0, 0, 0, 1.00);
+
+  --mt-theme-progress-bar-arc: 6;
+  --mt-theme-progress-bar-background-color: rgba(215, 215, 193, 1.00);
+  --mt-theme-progress-font-family: Segoe UI;
+  --mt-theme-progress-font-size: 10px;
+
+  --mt-theme-scroll-bar-background-color: rgba(215, 215, 193, 1.00);
+  --mt-theme-scroll-bar-show-buttons: 1;
+  --mt-theme-scroll-bar-thumb-highlight-color: rgba(205, 205, 197, 1.00);
+  --mt-theme-scroll-bar-thumb-arc: 7;
+  --mt-theme-scroll-bar-thumb-border-color: rgba(146, 146, 128, 1.00);
+  --mt-theme-scroll-bar-thumb-shadow-color: rgba(146, 146, 128, 1.00);
+  --mt-theme-scroll-bar-thumb-dark-shadow-color: rgba(106, 106, 91, 1.00);
+  --mt-theme-scroll-bar-thumb-color: rgba(154, 154, 101, 1.00);
+  --mt-theme-scroll-bar-thumb-insets-left: 0;
+  --mt-theme-scroll-bar-thumb-insets-top: 0;
+  --mt-theme-scroll-bar-thumb-insets-right: 0;
+  --mt-theme-scroll-bar-thumb-insets-bottom: 0;
+
+
+  font-size: var(--mt-theme-font-size);
+  font-family: var(--mt-theme-font-family);
+}
+
+
+body {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  padding: 0px;
+  margin: 0px;
+  background-color: rgba(0, 0, 0, 0); /* Needs to be transparent. */
+}
+
+#statSheet {
+  background-color: var(--mt-theme-color-background);
+  color: var(--mt-theme-color-foreground);
+  position: fixed;
+  padding: 10px;
+  margin: 0px;
+}
+
+.statSheet-topLeft {
+  position: fixed;
+  left: 0px;
+  top: 0px;
+}
+
+.statSheet-topRight {
+  position: fixed;
+  right: 0px;
+  top: 0px;
+}
+
+.statSheet-bottomLeft {
+  position: fixed;
+  left: 0px;
+  bottom: 0px;
+}
+
+.statSheet-bottomRight {
+  position: fixed;
+  right: 0px;
+  bottom: 0px;
+}
+
+.statSheet-top {
+  position: fixed;
+  left: 50%;
+  top: 0px;
+  transform: translate(-50%, 0);
+}
+
+.statSheet-bottom {
+  position: fixed;
+  left: 50%;
+  bottom: 0px;
+  transform: translate(-50%, 0);
+}
+
+.statSheet-left {
+  position: fixed;
+  left: 0px;
+  top: 50%;
+  transform: translate(0, -50%);
+}
+
+.statSheet-right {
+  position: fixed;
+  right: 0px;
+  top: 50%;
+  transform: translate(0, -50%);
+}
+
+
+/* Headings. */
+h1 {
+  font-family: var(--mt-theme-h1-font-family);
+  font-size: var(--mt-theme-h1-font-size);
+}
+
+h2 {
+  font-family: var(--mt-theme-h2-font-family);
+  font-size: var(--mt-theme-h2-font-size);
+}
+
+h3 {
+  font-family: var(--mt-theme-h3-font-family);
+  font-size: var(--mt-theme-h3-font-size);
+}
+
+h4 {
+  font-family: var(--mt-theme-h4-font-family);
+  font-size: var(--mt-theme-h4-font-size);
+}
+
+h5 {
+  font-family: var(--mt-theme-h5-font-family);
+  font-size: var(--mt-theme-h5-font-size);
+}
+
+h6 {
+  font-family: var(--mt-theme-h6-font-family);
+  font-size: var(--mt-theme-h6-font-size);
+}
+
+h1, h2, h3, h4, h5, h6 { margin-bottom: .5rem; }
+
+p,
+table,
+input {
+  vertical-align: middle;
+  font-size: 1rem;
+}
+
+/* Text input */
+input[type=text] {
+  color: var(--mt-theme-color-text-input-foreground);
+  background-color: var(--mt-theme-color-text-input-background);
+  border: var(--mt-theme-color-text-input-disabled-border-size) solid var(--mt-theme-color-text-input-disabled-border-color);
+}

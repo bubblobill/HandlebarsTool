@@ -1,0 +1,16 @@
+{
+  "reset" : false,
+  "background" : "Textures/Grass.png",
+  "datasetName" : "Basic",
+  "datasetDefault" : "Basic",
+  "handlebarsPort" : 6781,
+  "serverPort" : 7891,
+  "sheet" : "Simple",
+  "viewAs" : "player",
+  "watchFolder" : true,
+  "theme" : "Aah",
+  "folder" : "",
+  "statSheetLocation" : "statSheet-bottomLeft",
+  "datasets":{},
+  "themeCss": {}
+}

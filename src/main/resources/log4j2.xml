@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="ERROR">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} (%F:%L) [%t] %-5level - %msg%n"/>
+            <Filters>
+                <RegexFilter regex=".* apache .*" onMatch="DENY" onMismatch="ACCEPT"/>
+            </Filters>
+        </Console>
+        <RollingFile
+                name="LogFile"
+                fileName="${sys:user.dir}/_Log/HandlebarsTool.log"
+                filePattern="${sys:user.dir}/_Log/archive/handlebarsTool_%d{yyyy-MM-dd_HH-mm-ss}.log.zip"
+                ignoreExceptions="false">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"/>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10">
+                <Delete basePath="${sys:user.dir}/_Log/archive">
+                    <IfFileName glob="handlebarsUtil_*.log*"/>
+                    <IfLastModified age="14d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="Console" level="DEBUG"/>
+            <AppenderRef ref="LogFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

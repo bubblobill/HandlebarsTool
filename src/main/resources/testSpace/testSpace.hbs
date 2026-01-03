@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en_AU" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Testing Space</title>
+    <link rel="stylesheet" href="testSpace.css">
+    <link rel="stylesheet" href="brushedMetal.css">
+    <script src="js.js"></script>
+</head>
+<body>
+    <ul>
+
+    </ul>
+    <div style="display:none;">
+    <a id="newWindow" target="_blank" href="" class="hidden"></a>
+    <form id="fm_location"   method="dialog" action="testSpace.hbs"  enctype="application/x-www-form-urlencoded"></form>
+    <form id="fm_sheet"      method="dialog" action="testSpace.hbs"  enctype="application/x-www-form-urlencoded"></form>
+    <form id="fm_dataset"    method="dialog" action="testSpace.hbs"  enctype="application/x-www-form-urlencoded"></form>
+    <form id="fm_view"       method="dialog" action="testSpace.hbs"  enctype="application/x-www-form-urlencoded"></form>
+    <form id="fm_background" method="dialog" action="testSpace.hbs"  enctype="application/x-www-form-urlencoded"></form>
+    <form id="fm_theme"      method="dialog" action="testSpace.hbs"  enctype="application/x-www-form-urlencoded"></form>
+    </div>
+    <div class="content">
+        <div id="pad">
+            <div id="tl"><input form="fm_location" type="radio" id="radio-tl" name="statSheetLocation" class="location submit-on-change" value="statSheet-topLeft"     {{#eq statSheetLocation "statSheet-topLeft"    }}checked="checked"{{/eq}}><div><label for="radio-tl" class="metal radial radio-label">&#x27A4;</label></div></div>
+            <div id="t" ><input form="fm_location" type="radio" id="radio-t"  name="statSheetLocation" class="location submit-on-change" value="statSheet-top"         {{#eq statSheetLocation "statSheet-top"        }}checked="checked"{{/eq}}><div><label for="radio-t"  class="metal radial radio-label">&#x27A4;</label></div></div>
+            <div id="tr"><input form="fm_location" type="radio" id="radio-tr" name="statSheetLocation" class="location submit-on-change" value="statSheet-topRight"    {{#eq statSheetLocation "statSheet-topRight"   }}checked="checked"{{/eq}}><div><label for="radio-tr" class="metal radial radio-label">&#x27A4;</label></div></div>
+            <div id="l" ><input form="fm_location" type="radio" id="radio-l"  name="statSheetLocation" class="location submit-on-change" value="statSheet-left"        {{#eq statSheetLocation "statSheet-left"       }}checked="checked"{{/eq}}><div><label for="radio-l"  class="metal radial radio-label">&#x27A4;</label></div></div>
+            <div id="r" ><input form="fm_location" type="radio" id="radio-r"  name="statSheetLocation" class="location submit-on-change" value="statSheet-right"       {{#eq statSheetLocation "statSheet-right"      }}checked="checked"{{/eq}}><div><label for="radio-r"  class="metal radial radio-label">&#x27A4;</label></div></div>
+            <div id="bl"><input form="fm_location" type="radio" id="radio-bl" name="statSheetLocation" class="location submit-on-change" value="statSheet-bottomLeft"  {{#eq statSheetLocation "statSheet-bottomLeft" }}checked="checked"{{/eq}}><div><label for="radio-bl" class="metal radial radio-label">&#x27A4;</label></div></div>
+            <div id="b" ><input form="fm_location" type="radio" id="radio-b"  name="statSheetLocation" class="location submit-on-change" value="statSheet-bottom"      {{#eq statSheetLocation "statSheet-bottom"     }}checked="checked"{{/eq}}><div><label for="radio-b"  class="metal radial radio-label">&#x27A4;</label></div></div>
+            <div id="br"><input form="fm_location" type="radio" id="radio-br" name="statSheetLocation" class="location submit-on-change" value="statSheet-bottomRight" {{#eq statSheetLocation "statSheet-bottomRight"}}checked="checked"{{/eq}}><div><label for="radio-br" class="metal radial radio-label">&#x27A4;</label></div></div>
+        </div>
+
+        <div class="ga s">
+            <label for="sheet" title="{{source}}">Sheet</label>
+            <select id="sheet" form="fm_sheet" name="sheet" class="submit-on-change" {{#if sheets~}}size="{{#lt 14 sheets.length}}14{{else}}sheets.length{{/lt}}"{{/if}}>
+                {{#if sheets~}}
+                    {{#each sheets~}}
+                    <option value="{{this.entry}}"
+                    {{#eq this.entry sheet}}selected="selected"{{/eq}}>{{this.name}}</option>
+                    {{~/each}}
+                {{~/if}}
+            </select>
+        </div>
+
+        <div class="ga op">
+            <label for="reload" class="c15">Reload Sheet</label>
+            <button id="reload" class="c25">Reload</button>
+
+            <label for="separate" class="c10">New Window</label>
+            <button id="separate" class="c20">Open</button>
+
+            <label class="c11">View<input type="text" class="hidden" id="quietYou"></label>
+            <div class="c21">
+                <input type="radio" form="fm_view" name="viewAs" value="gm"     id="gm" {{#eq viewAs "gm"}}checked="checked"{{/eq}} class="submit-on-change"/><label for="gm">GM</label>
+                <input type="radio" form="fm_view" name="viewAs" value="owner"  id="ov" {{#eq viewAs "owner"}}checked="checked"{{/eq}} class="submit-on-change"/><label for="ov">Owner</label>
+                <input type="radio" form="fm_view" name="viewAs" value="player" id="pv" {{#eq viewAs "player"}}checked="checked"{{/eq}} class="submit-on-change"><label for="pv">Player</label>
+            </div>
+
+            <label for="datasetName" class="c12">Data-Set</label>
+            <select id="datasetName" form="fm_dataset" name="datasetName" class="c22 submit-on-change">
+                {{#if datasetNames}}
+                    {{#each datasetNames~}}
+                        <option value="{{this}}" {{#eq this datasetName}}selected="selected"{{/eq}}>{{this}}</option>
+                    {{~/each}}
+                {{/if}}
+            </select>
+            <label for="bg" class="c13">Background</label>
+            <select id="bg" form="fm_background" name="background" class="c23">
+                <option value="Textures/Arid.jpg"        {{#eq background  "Textures/Arid.jpg"       }}selected="selected"{{/eq}}>Arid</option        >
+                <option value="Textures/Black.png"       {{#eq background  "Textures/Black.png"      }}selected="selected"{{/eq}}>Black</option       >
+                <option value="Textures/Cobblestone.jpg" {{#eq background  "Textures/Cobblestone.jpg"}}selected="selected"{{/eq}}>Cobblestone</option >
+                <option value="Textures/CrackedMud.jpg"  {{#eq background  "Textures/CrackedMud.jpg" }}selected="selected"{{/eq}}>Cracked Mud</option >
+                <option value="Textures/DryGrass.jpg"    {{#eq background  "Textures/DryGrass.jpg"   }}selected="selected"{{/eq}}>Dry Grass</option   >
+                <option value="Textures/Grass.png"       {{#eq background  "Textures/Grass.png"      }}selected="selected"{{/eq}}>Grass</option       >
+                <option value="Textures/Ocean.jpg"       {{#eq background  "Textures/Ocean.jpg"      }}selected="selected"{{/eq}}>Ocean</option       >
+                <option value="Textures/PatchyGrass.jpg" {{#eq background  "Textures/PatchyGrass.jpg"}}selected="selected"{{/eq}}>Patchy Grass</option>
+                <option value="Textures/Sand.jpg"        {{#eq background  "Textures/Sand.jpg"       }}selected="selected"{{/eq}}>Sand</option        >
+                <option value="Textures/Starfield.jpg"   {{#eq background  "Textures/Starfield.jpg"  }}selected="selected"{{/eq}}>Starfield</option   >
+                <option value="Textures/Water.jpg"       {{#eq background  "Textures/Water.jpg"      }}selected="selected"{{/eq}}>Water</option       >
+            </select>
+
+            <label for="theme" class="c14">Theme</label>
+            <select id="theme" form="fm_theme" name="theme" class="c24 submit-on-change">
+                {{#if themes}}
+                {{#each themes~}}
+                <option value="{{this}}" {{#eq this theme}}selected="selected"{{/eq}}>{{this}}</option>
+                {{~/each}}
+                {{/if}}
+            </select>
+        </div>
+
+        <input type="checkbox" id="showData" class="hidden">
+        <p id="data" class="ga">{{#json this}}{{/json}}</p>
+        <label id="showDataLabel" for="showData" class="dBtn">Data</label>
+        <iframe id="overlay" src=""></iframe>
+    </div>
+</body>
+</html>

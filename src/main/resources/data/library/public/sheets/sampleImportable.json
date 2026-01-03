@@ -1,0 +1,374 @@
+{
+  "Default" : {
+    "tokenType" : "pc",
+    "name" : "Name",
+    "label" : "Label",
+    "gmName" : "GM Name",
+    "speechName" : "Speech Name",
+    "image" : "./image/image.png",
+    "portrait" : "./image/token.png",
+    "handout" : "./image/token.png",
+    "portraitWidth" : 150,
+    "portraitHeight" : 150,
+    "notes" : "Player notes",
+    "notesType" : "text/plain",
+    "gmNotes" : "GM Notes",
+    "gmNotesType" : "text/plain",
+    "properties" : [ {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "hitPoints",
+      "displayName" : "Hit Points",
+      "shortName" : "HP",
+      "value" : "27"
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "armourClass",
+      "displayName" : "Armour Class",
+      "shortName" : "AC",
+      "value" : "17"
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "weapon",
+      "displayName" : "Weapon",
+      "shortName" : "WP",
+      "value" : "Axe"
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "damage",
+      "displayName" : "Damage",
+      "shortName" : "Dmg",
+      "value" : "2d8"
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "",
+      "displayName" : "",
+      "shortName" : "",
+      "value" : "2d8"
+    } ]
+  },
+  "Basic" : {
+    "tokenType" : "pc",
+    "name" : "Name",
+    "label" : "Label",
+    "gmName" : "GM Name",
+    "speechName" : "Speech Name",
+    "image" : "./image/image.png",
+    "portrait" : "./image/portrait.png",
+    "handout" : "./image/handout.png",
+    "portraitWidth" : 175,
+    "portraitHeight" : 175,
+    "notes" : "Player notes",
+    "notesType" : "text/plain",
+    "gmNotes" : "GM Notes",
+    "gmNotesType" : "text/plain",
+    "properties" : [ {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Strength",
+      "displayName" : "",
+      "shortName" : "Str",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Dexterity",
+      "displayName" : "",
+      "shortName" : "Dex",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Constitution",
+      "displayName" : "",
+      "shortName" : "Con",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Intelligence",
+      "displayName" : "",
+      "shortName" : "Int",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Wisdom",
+      "displayName" : "",
+      "shortName" : "Wis",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Charisma",
+      "displayName" : "",
+      "shortName" : "Char",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "HP",
+      "displayName" : "",
+      "shortName" : "",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "AC",
+      "displayName" : "",
+      "shortName" : "",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Defense",
+      "displayName" : "",
+      "shortName" : "Def",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Movement",
+      "displayName" : "",
+      "shortName" : "Mov",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Elevation",
+      "displayName" : "",
+      "shortName" : "Elv",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Description",
+      "displayName" : "",
+      "shortName" : "Des",
+      "value" : ""
+    } ]
+  },
+  "NPC" : {
+    "tokenType" : "npc",
+    "name" : "NPC Name",
+    "label" : "NPC Label",
+    "gmName" : "NPC GM Name",
+    "speechName" : "NPC Speech Name",
+    "image" : "./image/image.png",
+    "portrait" : "./image/portrait.png",
+    "handout" : "./image/handout.png",
+    "portraitWidth" : 175,
+    "portraitHeight" : 175,
+    "notes" : "",
+    "notesType" : "text/plain",
+    "gmNotes" : "GM Notes",
+    "gmNotesType" : "text/plain",
+    "properties" : [ {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "Strength",
+      "displayName" : "",
+      "shortName" : "Str",
+      "value" : ""
+    }, {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "Dexterity",
+      "displayName" : "",
+      "shortName" : "Dex",
+      "value" : ""
+    }, {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "Constitution",
+      "displayName" : "",
+      "shortName" : "Con",
+      "value" : ""
+    }, {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "Intelligence",
+      "displayName" : "",
+      "shortName" : "Int",
+      "value" : ""
+    }, {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "Wisdom",
+      "displayName" : "",
+      "shortName" : "Wis",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Charisma",
+      "displayName" : "",
+      "shortName" : "Char",
+      "value" : ""
+    }, {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "HP",
+      "displayName" : "",
+      "shortName" : "",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "AC",
+      "displayName" : "",
+      "shortName" : "",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Defense",
+      "displayName" : "",
+      "shortName" : "Def",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Movement",
+      "displayName" : "",
+      "shortName" : "Mov",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Elevation",
+      "displayName" : "",
+      "shortName" : "Elv",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Description",
+      "displayName" : "",
+      "shortName" : "Des",
+      "value" : ""
+    } ]
+  },
+  "Monster" : {
+    "tokenType" : "npc",
+    "name" : "Monster Name",
+    "label" : "Monster Label",
+    "gmName" : "Monster GM Name",
+    "speechName" : "Monster Speech Name",
+    "image" : "./image/image.png",
+    "portrait" : "./image/portrait.png",
+    "handout" : "./image/handout.png",
+    "portraitWidth" : 175,
+    "portraitHeight" : 175,
+    "notes" : "",
+    "notesType" : "text/plain",
+    "gmNotes" : "GM Notes",
+    "gmNotesType" : "text/plain",
+    "properties" : [ {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "Strength",
+      "displayName" : "",
+      "shortName" : "Str",
+      "value" : ""
+    }, {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "Dexterity",
+      "displayName" : "",
+      "shortName" : "Dex",
+      "value" : ""
+    }, {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "Constitution",
+      "displayName" : "",
+      "shortName" : "Con",
+      "value" : ""
+    }, {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "Intelligence",
+      "displayName" : "",
+      "shortName" : "Int",
+      "value" : ""
+    }, {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "Wisdom",
+      "displayName" : "",
+      "shortName" : "Wis",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Charisma",
+      "displayName" : "",
+      "shortName" : "Char",
+      "value" : ""
+    }, {
+      "gmOnly" : true,
+      "ownerOnly" : false,
+      "name" : "HP",
+      "displayName" : "",
+      "shortName" : "",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "AC",
+      "displayName" : "",
+      "shortName" : "",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Defense",
+      "displayName" : "",
+      "shortName" : "Def",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Movement",
+      "displayName" : "",
+      "shortName" : "Mov",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Elevation",
+      "displayName" : "",
+      "shortName" : "Elv",
+      "value" : ""
+    }, {
+      "gmOnly" : false,
+      "ownerOnly" : false,
+      "name" : "Description",
+      "displayName" : "",
+      "shortName" : "Des",
+      "value" : ""
+    } ]
+  },
+  "Item" : {
+    "tokenType" : "npc",
+    "name" : "Item Name",
+    "label" : "Item Label",
+    "gmName" : "Item GM Name",
+    "speechName" : "Item Speech Name",
+    "image" : "./image/image.png",
+    "portrait" : "./image/portrait.png",
+    "handout" : "./image/handout.png",
+    "portraitWidth" : 175,
+    "portraitHeight" : 175,
+    "notes" : "Public Item Notes",
+    "notesType" : "text/plain",
+    "gmNotes" : "GM Notes",
+    "gmNotesType" : "text/plain",
+    "properties" : []
+  }
+}

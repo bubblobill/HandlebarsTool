@@ -1,0 +1,10 @@
+Copyright Notice
+Copyright © {0}, {1}, except as follows:
+This contains my own work except for those parts mentioned in "attributions.txt".
+Those parts attributable to other people are licensed with at least a minimum permission of personal non-commercial use.
+
+For my own work I retain copyright and grant the following license
+
+Copyright Licence
+PERMISSION TO USE COPYRIGHTED MATERIAL
+I, as the copyright holder grant permission to any real person, by which is meant a living part of the animal kingdom and not some other legal entity considered a person under law for whatever reason, to use, modify, reproduce, and distribute all content subject to the condition that such actions are for non-commercial purposes.

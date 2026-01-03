@@ -1,0 +1,24 @@
+<component name="ArtifactManager">
+  <artifact name="HandlebarsTool.main:jar">
+    <output-path>$PROJECT_DIR$/build/artifacts/HandlebarsTool_main_jar</output-path>
+    <root id="root">
+      <element id="archive" name="HandlebarsTool.main.jar">
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/src/main/META-INF/MANIFEST.MF" />
+        </element>
+        <element id="module-output" name="HandlebarsTool.main" />
+      </element>
+      <element id="library" level="project" name="Gradle: org.apache.logging.log4j:log4j-core:2.25.3" />
+      <element id="library" level="project" name="Gradle: org.apache.logging.log4j:log4j-slf4j-impl:2.25.3" />
+      <element id="library" level="project" name="Gradle: org.apache.commons:commons-lang3:3.12.0" />
+      <element id="library" level="project" name="Gradle: com.github.jknack:handlebars-proto:4.3.1" />
+      <element id="library" level="project" name="Gradle: com.github.jknack:handlebars-helpers:4.3.1" />
+      <element id="library" level="project" name="Gradle: org.beryx:badass-jlink-plugin:3.2.0" />
+      <element id="library" level="project" name="Gradle: com.github.jknack:handlebars:4.3.1" />
+      <element id="library" level="project" name="Gradle: org.slf4j:slf4j-api:1.7.36" />
+      <element id="library" level="project" name="Gradle: org.jsoup:jsoup:1.21.2" />
+      <element id="library" level="project" name="Gradle: com.jetbrains.intellij.java:java-gui-forms-rt:241.12019" />
+      <element id="library" level="project" name="Gradle: org.apache.logging.log4j:log4j-api:2.25.3" />
+    </root>
+  </artifact>
+</component>

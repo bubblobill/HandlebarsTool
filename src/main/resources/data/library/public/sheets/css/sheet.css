@@ -1,0 +1,113 @@
+
+#statSheet {
+    /* building on the base class for layout and appearance
+     #statSheet {
+       background-color: var(--mt-theme-color-background);
+       color: var(--mt-theme-color-foreground);
+       position: fixed;
+       padding: 10px;
+       margin: 0px;
+     }
+     */
+
+    display: grid;
+    grid-template-columns: var(--portrait-width) 4px fit-content;
+    grid-template-rows: auto auto var(--portrait-height);
+    max-height: fit-content;
+    max-width: fit-content;
+    position: relative;
+    border-image: url("../image/sparkle-glitter-small.gif") stretch;
+    border-image-slice: 15 fill;
+    border-width: 15px;
+    border-style: solid;
+}
+/* Change the position of different elements based on their location. */
+.statSheet-topLeft, .statSheet-top {
+  grid-template-areas:
+    " Pic St";
+    " Nm  St"
+    " .   St"
+}
+
+.statSheet-topRight {
+  grid-template-areas:
+    " St Pic";
+    " St Nm "
+    " St .  "
+}
+
+.statSheet-bottomLeft, .statSheet-bottom {
+  grid-template-areas:
+    " .   St"
+    " Nm  St"
+    " Pic St";
+}
+
+.statSheet-bottomRight {
+  grid-template-areas:
+    " St .  "
+    " St Nm "
+    " St Pic";
+}
+
+.statSheet-left {
+  grid-template-areas:
+    " .   St"
+    " Nm  St"
+    " Pic St"
+    " .   St";
+}
+
+.statSheet-right {
+  grid-template-areas:
+    " St ."
+    " St Nm"
+    " St Pic"
+    " St .";
+}
+
+.portrait {
+    height: calc(max(var(--portrait-height), var(--portrait-width)) * 1px);
+    width: calc(max(var(--portrait-height), var(--portrait-width)) * 1px);
+    overflow: clip;
+    grid-area: Pic;
+}
+.name {
+    overflow: hidden;
+    grid-area: Nm;
+    margin: 7px 4px;
+    text-align: center;
+    text-overflow: ellipsis;
+}
+
+.stats {
+    grid-area: St;
+    height: min-content;
+    width: fit-content;
+    max-height: 80vh;
+    max-width: 80vw;
+    display: table;
+}
+
+
+.entry {
+    padding: 2px 6px;
+    display: table-row;
+}
+.feature {
+    display: table-cell;
+    font-weight: bold;
+    border-right: 6px solid transparent;
+    border-bottom: 1px dotted #666;
+    text-align: right;
+    text-shadow:  1px 1px 3px silver, -1px -1px 3px white, 0 0 5px white;
+}
+.value {
+    border-bottom: 1px dotted #666;
+    border-left: 3px solid #4A4;
+    color: yellow;
+    display: table-cell;
+    text-align: left;
+    text-indent: 6px;
+    text-shadow: 1px 1px 3px silver, -1px -1px 3px black, 0 0 5px black;
+}
