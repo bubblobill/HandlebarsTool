@@ -39,7 +39,6 @@ import static net.rptools.data.Constants.TEMPLATE_DATA;
 public class HandlebarsServer {
     private static final Logger log = LoggerFactory.getLogger(HandlebarsServer.class);
     private static final String FALLBACK_TEMPLATE;
-    private static final FileSystemProvider FSP = FileSystems.getDefault().provider();
 
     static {
         String template = "";
@@ -59,7 +58,7 @@ public class HandlebarsServer {
     private Handlebars handlebars;
     private Server server;
     private static final ObjectNode CSS_OBJECT = Pref.getObjectNode(Config.THEME_CSS);
-    private Path basePath = FileSystems.getDefault().getRootDirectories().iterator().next();
+    private Path basePath;
 
     public HandlebarsServer() {
         basePath = Pref.getPath(Config.TEMPLATE_FOLDER);

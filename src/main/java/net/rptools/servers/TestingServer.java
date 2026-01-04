@@ -126,9 +126,7 @@ public class TestingServer {
     }
     public void addDataSet() {
         ObjectNode node = (ObjectNode) DATASETS.get(Pref.getString(Config.DATASET_NAME));
-        node.fieldNames().forEachRemaining(fieldName ->{
-            TEMPLATE_DATA.set(fieldName, node.get(fieldName));
-        });
+        node.fieldNames().forEachRemaining(fieldName -> TEMPLATE_DATA.set(fieldName, node.get(fieldName)));
     }
 
     public static final Supplier<Runnable> testServerRunnable = () -> () -> {
