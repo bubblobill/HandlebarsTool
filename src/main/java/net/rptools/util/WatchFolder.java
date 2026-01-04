@@ -1,6 +1,7 @@
 package net.rptools.util;
 
-import net.rptools.data.Config;
+import net.rptools.data.config.Config;
+import net.rptools.data.config.Pref;
 import net.rptools.data.Constants;
 import org.apache.commons.lang3.ThreadUtils;
 import org.slf4j.Logger;
@@ -142,7 +143,7 @@ public class WatchFolder {
     };
 
     private void initialise() {
-        if(Config.getBoolean(Config.WATCH_FOLDER)) {
+        if(Pref.getBoolean(Config.WATCH_FOLDER)) {
             STATE.set(Constants.State.STARTING);
             watchFuture = CompletableFuture.supplyAsync(VALIDATE_FOLDER)
                     .handleAsync(handle)

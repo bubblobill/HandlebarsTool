@@ -173,56 +173,56 @@
       "name" : "Strength",
       "displayName" : "",
       "shortName" : "Str",
-      "value" : ""
+      "value" : "8"
     }, {
       "gmOnly" : true,
       "ownerOnly" : false,
       "name" : "Dexterity",
       "displayName" : "",
       "shortName" : "Dex",
-      "value" : ""
+      "value" : "22"
     }, {
       "gmOnly" : true,
       "ownerOnly" : false,
       "name" : "Constitution",
       "displayName" : "",
       "shortName" : "Con",
-      "value" : ""
+      "value" : "1"
     }, {
       "gmOnly" : true,
       "ownerOnly" : false,
       "name" : "Intelligence",
       "displayName" : "",
       "shortName" : "Int",
-      "value" : ""
+      "value" : "007"
     }, {
       "gmOnly" : true,
       "ownerOnly" : false,
       "name" : "Wisdom",
       "displayName" : "",
       "shortName" : "Wis",
-      "value" : ""
+      "value" : "30"
     }, {
       "gmOnly" : false,
       "ownerOnly" : false,
       "name" : "Charisma",
       "displayName" : "",
       "shortName" : "Char",
-      "value" : ""
+      "value" : "42"
     }, {
       "gmOnly" : true,
       "ownerOnly" : false,
       "name" : "HP",
       "displayName" : "",
       "shortName" : "",
-      "value" : ""
+      "value" : "534"
     }, {
       "gmOnly" : false,
       "ownerOnly" : false,
       "name" : "AC",
       "displayName" : "",
       "shortName" : "",
-      "value" : ""
+      "value" : "26"
     }, {
       "gmOnly" : false,
       "ownerOnly" : false,
@@ -236,21 +236,21 @@
       "name" : "Movement",
       "displayName" : "",
       "shortName" : "Mov",
-      "value" : ""
+      "value" : "13m"
     }, {
       "gmOnly" : false,
       "ownerOnly" : false,
       "name" : "Elevation",
       "displayName" : "",
       "shortName" : "Elv",
-      "value" : ""
+      "value" : "4m"
     }, {
       "gmOnly" : false,
       "ownerOnly" : false,
       "name" : "Description",
       "displayName" : "",
       "shortName" : "Des",
-      "value" : ""
+      "value" : "Not an elf"
     } ]
   },
   "Monster" : {

@@ -1,151 +1,170 @@
-package net.rptools.util;
+package net.rptools.data.config;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.rptools.data.Constants;
+import net.rptools.util.Utils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static net.rptools.data.Config.*;
 import static net.rptools.data.Constants.OBJECT_MAPPER;
+import static net.rptools.data.config.Config.*;
 
 @SuppressWarnings("unused")
 public class ConfigStore {
     private static final Logger log = LoggerFactory.getLogger(ConfigStore.class);
-    private final Path CONFIG_PATH;
-    private final ObjectNode ROOT;
-    private static final ObjectNode DEFAULTS = OBJECT_MAPPER.createObjectNode();
+    private static final Path FILE_PATH = Path.of(System.getProperty("user.dir"), File.separator, ".config.json").toAbsolutePath();
+    private static final String DEFAULT_CONFIG_PATH = "/data/configData.json";
+    private static final String THEME_CSS_PATH = "/data/themeCss.json";
+    private static final String DEFAULT_DATASETS_PATH = "/data/tokenPropertyTypes.json";
+    private static final ObjectNode DEFAULTS;
+
+    private static final AtomicBoolean useBackingFile = new AtomicBoolean(true);
+    private static final AtomicBoolean loaded = new AtomicBoolean(false);
+    private static final AtomicBoolean resetting = new AtomicBoolean(false);
+
+    private static Path configFile;
+    private static final ObjectNode ROOT;
     private final List<JsonPointer> KEYS = new ArrayList<>();
 
-    private static File configFile;
+    static {
+        ObjectNode defaultsNode;
+        try {
+            defaultsNode = (ObjectNode) OBJECT_MAPPER.readTree(IOUtils.resourceToString(DEFAULT_CONFIG_PATH, StandardCharsets.UTF_8));
+            defaultsNode.set(Config.THEME_CSS, OBJECT_MAPPER.readTree(IOUtils.resourceToString(THEME_CSS_PATH, StandardCharsets.UTF_8)));
+            defaultsNode.set(Config.DATASETS, OBJECT_MAPPER.readTree(IOUtils.resourceToString(DEFAULT_DATASETS_PATH, StandardCharsets.UTF_8)));
+        } catch (IOException e) {
+            log.error(e.getLocalizedMessage(), e);
+            defaultsNode = OBJECT_MAPPER.createObjectNode();
+        }
+        DEFAULTS = defaultsNode;
+        ObjectNode rootNode = defaultsNode.deepCopy();
+        if (!Files.exists(FILE_PATH)) {
+            // create new config file
+            try {
+                configFile = Files.createFile(FILE_PATH);
+                log.info("New config file created at {}.", FILE_PATH);
+                try (OutputStream os = Files.newOutputStream(FILE_PATH)) {
+                    OBJECT_MAPPER.writeValue(os, DEFAULTS);
+                } catch (IOException e) {
+                    useBackingFile.set(false);
+                    log.error("Unable to write to new config file.\n{}, {}", e.getLocalizedMessage(), e);
+                }
+            } catch (IOException e) {
+                useBackingFile.set(false);
+                log.error("Unable to create config file.");
+            }
+        } else if (Files.isReadable(FILE_PATH)) {
+            // load from existing config file
+            try {
+                ObjectReader updateReader = OBJECT_MAPPER.readerForUpdating(rootNode);
+                rootNode = (ObjectNode) updateReader.readTree(IOUtils.toString(FILE_PATH.toUri(), StandardCharsets.UTF_8));
+                loaded.set(true);
+            } catch (IOException e) {
+                useBackingFile.set(false);
+                log.error("Unable to read existing config file.\n{}, {}", e.getLocalizedMessage(), e);
+            }
+            if (Files.isWritable(FILE_PATH)) {
+                // only set if writable.
+                configFile = FILE_PATH;
+            } else {
+                useBackingFile.set(false);
+                log.error("Unable to write to config file.");
+            }
+        } else {
+            useBackingFile.set(false);
+            rootNode = DEFAULTS.deepCopy();
+        }
+        ROOT = rootNode;
+    }
 
-    private final AtomicBoolean resetting = new AtomicBoolean(false);
-    private final AtomicBoolean useBackingFile = new AtomicBoolean(true);
-    private final AtomicBoolean loaded = new AtomicBoolean(false);
-    private final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
     public ConfigStore() {
-        this(null);
-    }
-    public ConfigStore(Path configPath) {
-        setDefaults();
-        ROOT = DEFAULTS.deepCopy();
+        if(ROOT.get(RESET).asBoolean()){
+            reset();
+        }
         ROOT.fieldNames().forEachRemaining(name -> KEYS.addAll(addKey(name, KEYS)));
-
-        boolean validFile = configPath != null;
-        if(validFile){
-            CONFIG_PATH = configPath.toAbsolutePath();
-        } else {
-            CONFIG_PATH = null;
-        }
-        if (validFile) {
-            validFile = getConfigFile() != null;
-        }
-        if (validFile) {
-            validFile = load();
-        }
-        if (validFile) {
-            Runtime.getRuntime().addShutdownHook(new Thread(this::save));
-            log.info("Config file is {}", configPath);
-        }
-        useBackingFile.set(validFile);
+        Runtime.getRuntime().addShutdownHook(new Thread(this::save));
     }
 
-    private void setDefaults() {
-        DEFAULTS.set(RESET, JsonNodeFactory.instance.booleanNode(false));
-        DEFAULTS.set(BACKGROUND, JsonNodeFactory.instance.textNode("Textures/Grass.png"));
-        DEFAULTS.set(DATASET_NAME, JsonNodeFactory.instance.textNode("Basic"));
-        DEFAULTS.set(DATASET_DEFAULT, JsonNodeFactory.instance.textNode("Basic"));
-        DEFAULTS.set(HANDLEBARS_PORT, JsonNodeFactory.instance.numberNode(6781));
-        DEFAULTS.set(SERVER_PORT, JsonNodeFactory.instance.numberNode(7891));
-        DEFAULTS.set(LOCATION, JsonNodeFactory.instance.textNode(Constants.StatSheetLocation.BOTTOM_LEFT.className()));
-        DEFAULTS.set(SHEET, JsonNodeFactory.instance.textNode("Simple"));
-        DEFAULTS.set(THEME, JsonNodeFactory.instance.textNode("Aah"));
-        DEFAULTS.set(TEMPLATE_FOLDER, JsonNodeFactory.instance.textNode(System.getProperty("user.home")));
-        DEFAULTS.set(LIB_FILE, JsonNodeFactory.instance.booleanNode(false));
-        DEFAULTS.set(VIEW_AS, JsonNodeFactory.instance.textNode("player"));
-        DEFAULTS.set(WATCH_FOLDER, JsonNodeFactory.instance.booleanNode(true));
+   /* private void setDefaults() {
+        DEFAULTS.set(Config.RESET, JsonNodeFactory.instance.booleanNode(false));
+        DEFAULTS.set(Config.BACKGROUND, JsonNodeFactory.instance.textNode("Textures/Grass.png"));
+        DEFAULTS.set(Config.DATASET_NAME, JsonNodeFactory.instance.textNode("Basic"));
+        DEFAULTS.set(Config.DATASET_DEFAULT, JsonNodeFactory.instance.textNode("Basic"));
+        DEFAULTS.set(Config.HANDLEBARS_PORT, JsonNodeFactory.instance.numberNode(6781));
+        DEFAULTS.set(Config.SERVER_PORT, JsonNodeFactory.instance.numberNode(7891));
+        DEFAULTS.set(Config.LOCATION, JsonNodeFactory.instance.textNode(Constants.StatSheetLocation.BOTTOM_LEFT.className()));
+        DEFAULTS.set(Config.SHEET, JsonNodeFactory.instance.textNode("Simple"));
+        DEFAULTS.set(Config.THEME, JsonNodeFactory.instance.textNode("Aah"));
+        DEFAULTS.set(Config.TEMPLATE_FOLDER, JsonNodeFactory.instance.textNode(System.getProperty("user.home")));
+        DEFAULTS.set(Config.LIB_FILE, JsonNodeFactory.instance.booleanNode(false));
+        DEFAULTS.set(Config.VIEW_AS, JsonNodeFactory.instance.textNode("player"));
+        DEFAULTS.set(Config.WATCH_FOLDER, JsonNodeFactory.instance.booleanNode(true));
 
         try (InputStream is = ConfigStore.class.getResourceAsStream("/data/tokenPropertyTypes.json")) {
-            DEFAULTS.set(DATASETS, OBJECT_MAPPER.readTree(is));
+            DEFAULTS.set(Config.DATASETS, OBJECT_MAPPER.readTree(is));
             ArrayNode arrayNode = OBJECT_MAPPER.createArrayNode();
-            DEFAULTS.get(DATASETS).fieldNames().forEachRemaining(arrayNode::add);
-            DEFAULTS.set(DATASET_NAMES, arrayNode);
+            DEFAULTS.get(Config.DATASETS).fieldNames().forEachRemaining(arrayNode::add);
+            DEFAULTS.set(Config.DATASET_NAMES, arrayNode);
         } catch (IOException e) {
             Utils.whoops(e);
             log.error(e.getLocalizedMessage(), e);
-            DEFAULTS.set(DATASETS, JsonNodeFactory.instance.objectNode());
+            DEFAULTS.set(Config.DATASETS, JsonNodeFactory.instance.objectNode());
         }
 
         try (InputStream is = ConfigStore.class.getResourceAsStream("/data/themeCss.json")) {
-            DEFAULTS.set(THEME_CSS, OBJECT_MAPPER.readTree(is));
+            DEFAULTS.set(Config.THEME_CSS, OBJECT_MAPPER.readTree(is));
         } catch (IOException e) {
             Utils.whoops(e);
             log.error(e.getLocalizedMessage(), e);
-            DEFAULTS.set(THEME_CSS, JsonNodeFactory.instance.objectNode());
+            DEFAULTS.set(Config.THEME_CSS, JsonNodeFactory.instance.objectNode());
         }
     }
-    private List<JsonPointer> addKey(String key, List<JsonPointer> keyList){
+*/
+    private List<JsonPointer> addKey(String key, List<JsonPointer> keyList) {
         key = key.startsWith("/") ? key : "/" + key;
         JsonPointer pointer = JsonPointer.compile(key);
-        if(missingKey(pointer)){
+        if (!KEYS.contains(pointer)) {
             keyList.add(pointer);
         }
         JsonNode node = ROOT.at(pointer);
-        if(node instanceof ObjectNode objectNode){
+        if (node instanceof ObjectNode objectNode) {
             objectNode.fieldNames().forEachRemaining(name -> addKey(pointer.appendProperty(name).toString(), keyList));
-        } else if(node instanceof ArrayNode arrayNode){
+        } else if (node instanceof ArrayNode arrayNode) {
             for (int i = 0; i < arrayNode.size(); i++) {
                 addKey(pointer.appendIndex(i).toString(), keyList);
             }
         }
         return keyList;
     }
-    private synchronized boolean load() {
-        final File file = getConfigFile();
-        if(useBackingFile.get() && file != null) {
-            synchronized (file) {
-                try {
-                    JsonNode readNode = OBJECT_MAPPER.readTree(new FileInputStream(file));
-                    if (readNode instanceof ObjectNode objectNode) {
-                        ROOT.setAll(objectNode);
-                        loaded.set(true);
-                        return true;
-                    }
-                } catch (IOException e) {
-                    Utils.whoops(e);
-                    log.error(e.getLocalizedMessage(), e);
-                }
-            }
-        }
-        return false;
-    }
 
     private synchronized void save() {
         if (!useBackingFile.get()) {
             return;
         }
-        final File file = getConfigFile();
+        final Path file = getConfigFile();
         if (file == null) {
             return;
         }
         synchronized (file) {
             ObjectNode properties = ROOT.deepCopy();
             try {
-                if (file.exists()) {
-                    OBJECT_MAPPER.writeValue(new FileOutputStream(file), properties);
+                if (Files.exists(file)) {
+                    OBJECT_MAPPER.writeValue(new FileOutputStream(file.toFile()), properties);
                 }
             } catch (IOException e) {
                 Utils.whoops(e);
@@ -154,17 +173,15 @@ public class ConfigStore {
         }
     }
 
-    public File getConfigFile() {
-        if(useBackingFile.get()) {
-            if (configFile == null){
-                configFile = CONFIG_PATH.toFile();
-            }
+    public Path getConfigFile() {
+        if (useBackingFile.get()) {
             try {
                 if (resetting.get()) {
-                    Files.deleteIfExists(CONFIG_PATH);
+                    Files.deleteIfExists(FILE_PATH);
                 }
-                if (!configFile.exists()) {
-                    configFile = Files.createFile(CONFIG_PATH).toFile();
+                if (!Files.exists(configFile)) {
+                    configFile = Files.createFile(FILE_PATH);
+                    log.info("Pref file created.");
                     save();
                 }
             } catch (IOException e) {
@@ -180,15 +197,13 @@ public class ConfigStore {
         resetting.set(true);
         synchronized (ROOT) {
             ROOT.removeAll();
-            DEFAULTS.fieldNames().forEachRemaining(name ->
-                    set(name, DEFAULTS.get(name)));
+            ROOT.setAll(DEFAULTS);
+//            DEFAULTS.fieldNames().forEachRemaining(name ->
+//                    set(name, DEFAULTS.get(name)));
         }
         resetting.set(false);
     }
 
-    public boolean missingKey(JsonPointer key) {
-        return !KEYS.contains(key);
-    }
 
 
     public JsonNode get(String key) {
@@ -200,7 +215,7 @@ public class ConfigStore {
      * @return found node or default as node
      */
     public synchronized JsonNode getOrDefault(Object defaultValue, String... keys) {
-        if(useBackingFile.get() && !loaded.get()){
+        if (useBackingFile.get() && !loaded.get()) {
             int count = 20;
             while (!loaded.get() && count > 0) {
                 try {
@@ -213,7 +228,7 @@ public class ConfigStore {
         }
         synchronized (ROOT) {
             for (String key : keys) {
-                if(key == null) {
+                if (key == null) {
                     continue;
                 }
                 JsonNode value;
@@ -222,7 +237,7 @@ public class ConfigStore {
                         key = "/" + key;
                     }
                     JsonPointer pointer = JsonPointer.compile(key);
-                    if(missingKey(pointer)){
+                    if (!KEYS.contains(pointer)) {
                         continue;
                     }
                     value = ROOT.at(pointer);

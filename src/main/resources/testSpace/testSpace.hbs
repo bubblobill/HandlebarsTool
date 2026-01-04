@@ -34,7 +34,7 @@
 
         <div class="ga s">
             <label for="sheet" title="{{source}}">Sheet</label>
-            <select id="sheet" form="fm_sheet" name="sheet" class="submit-on-change" {{#if sheets~}}size="{{#lt 14 sheets.length}}14{{else}}sheets.length{{/lt}}"{{/if}}>
+            <select id="sheet" form="fm_sheet" name="sheet" class="submit-on-change" size="14">
                 {{#if sheets~}}
                     {{#each sheets~}}
                     <option value="{{this.entry}}"

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import net.rptools.data.config.Config;
+import net.rptools.data.config.Pref;
 import net.rptools.util.Phantom;
 import net.rptools.util.WatchFolder;
 import org.slf4j.Logger;
@@ -28,8 +30,8 @@ public class SheetsObject {
     private static final Logger log = LoggerFactory.getLogger(SheetsObject.class);
     private static final ObjectNode json = OBJECT_MAPPER.createObjectNode();
     private static final JFileChooser fc = new JFileChooser();
-    private static String sheet = Config.getString(Config.SHEET);
-    private static Path folder = Config.getPath(Config.TEMPLATE_FOLDER);
+    private static String sheet = Pref.getString(Config.SHEET);
+    private static Path folder = Pref.getPath(Config.TEMPLATE_FOLDER);
     private static boolean loaded = false;
     private static final List<Path> PATH_LIST = new ArrayList<>();
     private static final AtomicBoolean WATCH_CHANGE = new AtomicBoolean(false);
@@ -75,10 +77,10 @@ public class SheetsObject {
         if (f.exists() && f.isDirectory()) {
             PATH_LIST.clear();
             folder = folder_;
-            if (Config.getBoolean(Config.LIB_FILE)){
+            if (Pref.getBoolean(Config.LIB_FILE)){
                 LibraryJSON.setJsonFilePath(folder_);
             }
-            Config.set(Config.TEMPLATE_FOLDER, folder_.toString());
+            Pref.set(Config.TEMPLATE_FOLDER, folder_.toString());
             json.removeAll();
             json.put("source", folder_.toString());
             PATH_LIST.addAll(new Phantom(folder).getPaths());
@@ -95,7 +97,7 @@ public class SheetsObject {
                 ObjectNode sheet = JsonNodeFactory.instance.objectNode();
                 if (SheetsObject.sheet == null) {
                     SheetsObject.sheet = path.getFileName().toString();
-                    Config.set(Config.SHEET, SheetsObject.sheet);
+                    Pref.set(Config.SHEET, SheetsObject.sheet);
                 }
                 sheet.put("name", path.getFileName().toString().replaceAll(".hbs", ""));
                 sheet.put("entry", folder_.relativize(path).toString());
@@ -103,7 +105,7 @@ public class SheetsObject {
                 sheet.set("propertyTypes", OBJECT_MAPPER.createArrayNode());
                 arrayNode.add(sheet);
             }
-            if (Config.getBoolean(Config.LIB_FILE)) {
+            if (Pref.getBoolean(Config.LIB_FILE)) {
                 LibraryJSON.addSheets(arrayNode);
             }
         }

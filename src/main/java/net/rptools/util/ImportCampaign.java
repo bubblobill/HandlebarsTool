@@ -2,7 +2,8 @@ package net.rptools.util;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import net.rptools.data.Config;
+import net.rptools.data.config.Config;
+import net.rptools.data.config.Pref;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -24,7 +25,7 @@ import static net.rptools.data.Constants.*;
 
 public class ImportCampaign {
 private static final Logger log = LoggerFactory.getLogger(ImportCampaign.class);
-    private static final JFileChooser fc = new JFileChooser(Config.getPath(Config.TEMPLATE_FOLDER).toFile());
+    private static final JFileChooser fc = new JFileChooser(Pref.getPath(Config.TEMPLATE_FOLDER).toFile());
 
     private static final String FILE_NAME = "content.xml";
     private static Component parent = null;
@@ -62,10 +63,10 @@ private static final Logger log = LoggerFactory.getLogger(ImportCampaign.class);
         }
 
         if (out != null && !out.isEmpty()) {
-            ObjectNode defaultObject = Config.getObjectNode(Config.DATASETS + "/Default");
+            ObjectNode defaultObject = Pref.getObjectNode(Config.DATASETS + "/Default");
             final ObjectNode output = out;
             out.fieldNames().forEachRemaining(name ->
-                    Config.getObjectNode(Config.DATASETS)
+                    Pref.getObjectNode(Config.DATASETS)
                             .set(name, defaultObject.deepCopy().set("properties", output.get(name))));
         }
         log.info("Import successful");

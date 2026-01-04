@@ -7,7 +7,8 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import net.rptools.Main;
-import net.rptools.data.Config;
+import net.rptools.data.config.Config;
+import net.rptools.data.config.Pref;
 import net.rptools.data.Constants;
 import net.rptools.data.TokenProperty;
 import net.rptools.util.ImportCampaign;
@@ -66,10 +67,10 @@ public class EditPropertyTypes extends JDialog {
     private JButton importButton;
     private DefaultTableModel tableModel;
 
-    private static String datasetName = Config.getString("Basic", Config.getString(Config.DATASET_DEFAULT), Config.DATASET_NAME);
-    //    private static final ObjectNode DATASETS = Config.getObjectNode(Config.DATASETS);
-    private static final List<String> DATA_SET_NAMES = Config.getList(Config.DATASETS);
-    private static final ObjectNode DEFAULT_DATA_OBJECT = Config.getObjectNode(Config.DATASETS + "/" + datasetName, Config.DATASETS + "/Basic");
+    private static String datasetName = Pref.getString("Basic", Pref.getString(Config.DATASET_DEFAULT), Config.DATASET_NAME);
+    //    private static final ObjectNode DATASETS = Pref.getObjectNode(Pref.DATASETS);
+    private static final List<String> DATA_SET_NAMES = Pref.getList(Config.DATASETS);
+    private static final ObjectNode DEFAULT_DATA_OBJECT = Pref.getObjectNode(Config.DATASETS + "/" + datasetName, Config.DATASETS + "/Basic");
     private ObjectNode tokenData;
 
     public EditPropertyTypes() {
@@ -116,7 +117,7 @@ public class EditPropertyTypes extends JDialog {
         portraitHeight.setModel(new SpinnerNumberModel(tokenData.get("portraitHeight").asDouble(), 20, 500, 1));
         portraitWidth.setModel(new SpinnerNumberModel(tokenData.get("portraitWidth").asDouble(), 20, 500, 1));
 
-        String defaultDataset = Config.getString(Config.DATASET_DEFAULT);
+        String defaultDataset = Pref.getString(Config.DATASET_DEFAULT);
         if (defaultDataset != null && !defaultDataset.isBlank()) {
             dataSetCombo.setSelectedItem(defaultDataset);
         }
@@ -155,7 +156,7 @@ public class EditPropertyTypes extends JDialog {
         onOK();
     }
 
-    private static final JFileChooser IMAGE_CHOOSER = new JFileChooser(Config.getPath(Config.TEMPLATE_FOLDER).toFile());
+    private static final JFileChooser IMAGE_CHOOSER = new JFileChooser(Pref.getPath(Config.TEMPLATE_FOLDER).toFile());
 
     static {
         IMAGE_CHOOSER.setMultiSelectionEnabled(false);
@@ -174,7 +175,7 @@ public class EditPropertyTypes extends JDialog {
         } else {
             return;
         }
-        File file = Config.getPath(Config.TEMPLATE_FOLDER).resolve(textComponent.getText().isBlank() ? "images" : textComponent.getText()).toAbsolutePath().toFile();
+        File file = Pref.getPath(Config.TEMPLATE_FOLDER).resolve(textComponent.getText().isBlank() ? "images" : textComponent.getText()).toAbsolutePath().toFile();
         if (file.exists()) {
             IMAGE_CHOOSER.setSelectedFile(file);
         }
@@ -186,7 +187,7 @@ public class EditPropertyTypes extends JDialog {
             } catch (IOException _) {
                 return;
             }
-            Path value = Config.getPath(Config.TEMPLATE_FOLDER).relativize(file.toPath().toAbsolutePath());
+            Path value = Pref.getPath(Config.TEMPLATE_FOLDER).relativize(file.toPath().toAbsolutePath());
             textComponent.setText("./" + value.toString().replaceAll(Matcher.quoteReplacement("\\"), "/"));
         }
     }
@@ -247,7 +248,7 @@ public class EditPropertyTypes extends JDialog {
         if (idx > -1) {
             String currentName = dataSetCombo.getItemAt(idx);
             if (currentName.equalsIgnoreCase("Default")) {
-                Config.getObjectNode(Config.DATASETS).remove(currentName);
+                Pref.getObjectNode(Config.DATASETS).remove(currentName);
             }
             dataSetCombo.removeItemAt(idx);
             if (dataSetCombo.getItemCount() > idx) {
@@ -278,7 +279,7 @@ public class EditPropertyTypes extends JDialog {
 
     private void onSetDefault(ActionEvent e) {
         if (defaultCheckBox.isSelected()) {
-            Config.set(Config.DATASET_DEFAULT, dataSetCombo.getSelectedItem());
+            Pref.set(Config.DATASET_DEFAULT, dataSetCombo.getSelectedItem());
         }
     }
 
@@ -553,10 +554,10 @@ public class EditPropertyTypes extends JDialog {
             arrayNode.add(node);
         }
         tokenData.set("properties", arrayNode);
-        Config.set(Config.DATASETS + "/" + datasetName, tokenData);
+        Pref.set(Config.DATASETS + "/" + datasetName, tokenData);
         ArrayNode names = OBJECT_MAPPER.createArrayNode();
-        Config.getObjectNode(Config.DATASETS).fieldNames().forEachRemaining(names::add);
-        Config.set(Config.DATASET_NAMES, names);
+        Pref.getObjectNode(Config.DATASETS).fieldNames().forEachRemaining(names::add);
+        Pref.set(Config.DATASET_NAMES, names);
     }
 
     private void newTokenData(String name) {
@@ -573,7 +574,7 @@ public class EditPropertyTypes extends JDialog {
 
         ObjectNode data;
         if (exists) {
-            data = Config.getObjectNode(Config.DATASETS + "/" + datasetName);
+            data = Pref.getObjectNode(Config.DATASETS + "/" + datasetName);
             if (data.isEmpty()) {
                 data = DEFAULT_DATA_OBJECT.deepCopy();
             }
@@ -583,14 +584,14 @@ public class EditPropertyTypes extends JDialog {
 
         tokenData = data;
         populateTable();
-        Config.set(Config.DATASET_NAME, datasetName);
+        Pref.set(Config.DATASET_NAME, datasetName);
     }
 
     private final ItemListener dataSetListener = (e) -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
             saveTokenData();
             String datasetName = (String) e.getItem();
-            defaultCheckBox.setSelected(datasetName.equalsIgnoreCase(Config.getString(Config.DATASET_DEFAULT)));
+            defaultCheckBox.setSelected(datasetName.equalsIgnoreCase(Pref.getString(Config.DATASET_DEFAULT)));
             loadTokenData(datasetName);
         }
     };

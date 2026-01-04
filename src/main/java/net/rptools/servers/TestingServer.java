@@ -5,11 +5,11 @@ import com.github.jknack.handlebars.*;
 import com.github.jknack.handlebars.io.ClassPathTemplateLoader;
 import com.github.jknack.handlebars.io.TemplateLoader;
 import com.github.jknack.handlebars.io.URLTemplateLoader;
-import net.rptools.data.Config;
+import net.rptools.data.config.Config;
+import net.rptools.data.config.Pref;
 import net.rptools.data.SheetsObject;
 import net.rptools.util.Utils;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
@@ -26,7 +26,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static net.rptools.data.Constants.OBJECT_MAPPER;
@@ -35,7 +34,7 @@ import static net.rptools.data.Constants.TEMPLATE_DATA;
 public class TestingServer {
     private static final Logger log = LoggerFactory.getLogger(TestingServer.class);
 
-    private static final ObjectNode DATASETS = Config.getObjectNode(Config.DATASETS);
+    private static final ObjectNode DATASETS = Pref.getObjectNode(Config.DATASETS);
     private static final String RESOURCE_FOLDER = "/testSpace";
     private static final String PATH_PREFIX = "testSpace";
     private static final URLTemplateLoader TEMPLATE_LOADER = new ClassPathTemplateLoader();
@@ -54,13 +53,13 @@ public class TestingServer {
         try {
             TEMPLATE_DATA.removeAll();
             TEMPLATE_DATA.setAll(SheetsObject.getJson());
-            TEMPLATE_DATA.set("datasetNames", Config.getArrayNode(Config.DATASET_NAMES));
-            TEMPLATE_DATA.put("datasetName", Config.getString(Config.DATASET_NAME));
-            TEMPLATE_DATA.put("statSheetLocation", Config.getString(Config.LOCATION));
-            TEMPLATE_DATA.set("themes", OBJECT_MAPPER.readTree(OBJECT_MAPPER.writerFor(List.class).writeValueAsString(Config.getList(Config.THEME_CSS))));
-            TEMPLATE_DATA.put("theme", Config.getString(Config.THEME));
-            TEMPLATE_DATA.put("background", Config.getString(Config.BACKGROUND));
-            TEMPLATE_DATA.put("viewAs", Config.getString(Config.VIEW_AS));
+            TEMPLATE_DATA.set("datasetNames", Pref.getArrayNode(Config.DATASET_NAMES));
+            TEMPLATE_DATA.put("datasetName", Pref.getString(Config.DATASET_NAME));
+            TEMPLATE_DATA.put("statSheetLocation", Pref.getString(Config.LOCATION));
+            TEMPLATE_DATA.set("themes", OBJECT_MAPPER.readTree(OBJECT_MAPPER.writerFor(List.class).writeValueAsString(Pref.getList(Config.THEME_CSS))));
+            TEMPLATE_DATA.put("theme", Pref.getString(Config.THEME));
+            TEMPLATE_DATA.put("background", Pref.getString(Config.BACKGROUND));
+            TEMPLATE_DATA.put("viewAs", Pref.getString(Config.VIEW_AS));
             addDataSet();
 
             TEMPLATE_LOADER.setPrefix(RESOURCE_FOLDER);
@@ -90,15 +89,15 @@ public class TestingServer {
                 }
             }});
 
-            server = new Server(Config.getInt(Config.SERVER_PORT));
+            server = new Server(Pref.getInt(Config.SERVER_PORT));
             server.addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
                 @Override
                 public void lifeCycleStarted(final LifeCycle event) {
-                    log.info("Testing server started on port {}. http://localhost:{}/testSpace{}", Config.getInt(Config.SERVER_PORT), Config.getInt(Config.SERVER_PORT), TemplateLoader.DEFAULT_SUFFIX);
+                    log.info("Testing server started on port {}. http://localhost:{}/testSpace{}", Pref.getInt(Config.SERVER_PORT), Pref.getInt(Config.SERVER_PORT), TemplateLoader.DEFAULT_SUFFIX);
                 }
             });
             server.setHandler(root);
-            if(Config.getBoolean(Config.WATCH_FOLDER)) {
+            if(Pref.getBoolean(Config.WATCH_FOLDER)) {
                 SSEServlet sseServlet = new SSEServlet();
                 ServletHolder sseServletHolder = new ServletHolder("SSEServletHolder", sseServlet);
                 root.addServlet(sseServletHolder, "/sse");
@@ -126,7 +125,7 @@ public class TestingServer {
         }
     }
     public void addDataSet() {
-        ObjectNode node = (ObjectNode) DATASETS.get(Config.getString(Config.DATASET_NAME));
+        ObjectNode node = (ObjectNode) DATASETS.get(Pref.getString(Config.DATASET_NAME));
         node.fieldNames().forEachRemaining(fieldName ->{
             TEMPLATE_DATA.set(fieldName, node.get(fieldName));
         });

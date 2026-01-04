@@ -3,11 +3,9 @@ package net.rptools.servers;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.jknack.handlebars.*;
-import com.github.jknack.handlebars.io.ClassPathTemplateLoader;
-import com.github.jknack.handlebars.io.FileTemplateLoader;
 import com.github.jknack.handlebars.io.TemplateLoader;
-import com.github.jknack.handlebars.io.URLTemplateSource;
-import net.rptools.data.Config;
+import net.rptools.data.config.Config;
+import net.rptools.data.config.Pref;
 import net.rptools.data.SheetsObject;
 import net.rptools.util.Utils;
 import org.apache.commons.io.IOUtils;
@@ -29,29 +27,44 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.spi.FileSystemProvider;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.rptools.data.Constants.TEMPLATE_DATA;
-import static org.apache.commons.io.FilenameUtils.removeExtension;
 
 public class HandlebarsServer {
     private static final Logger log = LoggerFactory.getLogger(HandlebarsServer.class);
+    private static final String FALLBACK_TEMPLATE;
+    private static final FileSystemProvider FSP = FileSystems.getDefault().provider();
+
+    static {
+        String template = "";
+        try (InputStream in = HandlebarsServer.class.getResourceAsStream("/testSpace/jedi.svg")) {
+            if (in != null) {
+                template += "<html lang=\"en-AU\"><body><div id=\"statSheet\" class=\"statSheet-bottomLeft\">";
+                template += new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                template += "</div></body></html>";
+            }
+        } catch (IOException e) {
+            log.error(e.getLocalizedMessage(), e);
+        }
+        FALLBACK_TEMPLATE = template;
+    }
+
     private static final String CONTEXT = "/";
     private Handlebars handlebars;
     private Server server;
-    private static final ObjectNode CSS_OBJECT = Config.getObjectNode(Config.THEME_CSS);
+    private static final ObjectNode CSS_OBJECT = Pref.getObjectNode(Config.THEME_CSS);
+    private Path basePath = FileSystems.getDefault().getRootDirectories().iterator().next();
 
     public HandlebarsServer() {
+        basePath = Pref.getPath(Config.TEMPLATE_FOLDER);
         try {
-            server = new Server(Config.getInt(Config.HANDLEBARS_PORT));
-//        TemplateLoader loader = new URLTemplateSource(SessionTemp.getMirrorFolder().toString());
+            server = new Server(Pref.getInt(Config.HANDLEBARS_PORT));
             handlebars = new Handlebars();
             Utils.registerHandlebarsHelpers(handlebars);
 
@@ -63,7 +76,8 @@ public class HandlebarsServer {
             root.setContextPath(CONTEXT);
             root.setLogger(null);
 
-            root.setResourceBase(Config.getPath(Config.TEMPLATE_FOLDER).toString());
+            root.setResourceBase(basePath.toString());
+            root.addServlet(servletHolder, "/");
             root.addServlet(servletHolder, "*" + TemplateLoader.DEFAULT_SUFFIX);
             root.setParentLoaderPriority(true);
 
@@ -81,7 +95,7 @@ public class HandlebarsServer {
                 @Override
                 public void lifeCycleStarted(final LifeCycle event) {
                     log.info("Handlebars server started. http://localhost:{}{}/{}",
-                            Config.getInt(Config.HANDLEBARS_PORT),
+                            Pref.getInt(Config.HANDLEBARS_PORT),
                             CONTEXT,
                             SheetsObject.getJson().get("sheet").asText());
                 }
@@ -116,14 +130,14 @@ public class HandlebarsServer {
 
         @Override
         protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-            log.info("Handlebars POST request -> {}", req.getRequestURI());
+            log.debug("Handlebars POST request -> {}", req.getRequestURI());
             doGet(req, resp);
         }
 
         @Override
         protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
                 throws ServletException, IOException {
-            log.info("Handlebars GET request -> {}", request.getRequestURI());
+            log.debug("Handlebars GET request -> {}", request.getRequestURI());
 
             Writer writer = null;
             Utils.commonResponseBits(response);
@@ -141,14 +155,12 @@ public class HandlebarsServer {
                 if (!css.isBlank()) {
                     var cssNode = doc.createElement("style");
                     cssNode.id("themeCss");
-                    cssNode.appendText(Config.getObjectNode(Config.THEME_CSS).get(Config.getString(Config.THEME)).asText());
-
+                    cssNode.appendText(Pref.getObjectNode(Config.THEME_CSS).get(Pref.getString(Config.THEME)).asText());
                     var head = doc.head();
                     head.insertChildren(0, cssNode);
                 }
                 writer = response.getWriter();
                 writer.write(doc.outerHtml());
-
             } catch (HandlebarsException ex) {
                 Utils.handlebarsError(ex, response);
             } catch (JsonParseException ex) {
@@ -178,19 +190,26 @@ public class HandlebarsServer {
          * path.
          */
         private String requestURI(final HttpServletRequest request) {
-            System.out.println(request.getRequestURI());
             return request.getRequestURI().replace(request.getContextPath(), "");
         }
     }
 
     public Function<String, String> getTemplateText = requestURI -> {
-        try (FileInputStream in = new FileInputStream(Config.getPath(Config.TEMPLATE_FOLDER).resolve(requestURI.substring(1)).toFile())) {
-            byte[] data = in.readAllBytes();
-            return new String(data, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            log.error(e.getLocalizedMessage(), e);
-            return "<html lang=\"en-AU\"><body><div id=\"statSheet\" class=\"statSheet-bottomLeft\"><img src=\"./Images/fallback.gif\" alt=\"D'oh!\"/></div></body></html>";
+        if (requestURI == null || requestURI.isBlank() || requestURI.equalsIgnoreCase("null")) {
+            return FALLBACK_TEMPLATE;
         }
+        Path sourcePath = basePath.resolve(requestURI.substring(1));
+
+        if (Files.exists(sourcePath) && Files.isRegularFile(sourcePath)) {
+            if (Files.isReadable(sourcePath) || sourcePath.toFile().setReadable(true)) {
+                try {
+                    return Files.readString(sourcePath, StandardCharsets.ISO_8859_1);
+                } catch (IOException e) {
+                    log.error(e.getLocalizedMessage(), e);
+                }
+            }
+        }
+        return FALLBACK_TEMPLATE;
     };
     public static final Supplier<Runnable> handlebarsRunnable = () -> () -> {
         HandlebarsServer handlebarsServer = new HandlebarsServer();

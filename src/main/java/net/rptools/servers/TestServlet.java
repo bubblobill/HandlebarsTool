@@ -8,7 +8,8 @@ import com.github.jknack.handlebars.Context;
 import com.github.jknack.handlebars.HandlebarsException;
 import com.github.jknack.handlebars.JsonNodeValueResolver;
 import com.github.jknack.handlebars.Template;
-import net.rptools.data.Config;
+import net.rptools.data.config.Config;
+import net.rptools.data.config.Pref;
 import net.rptools.util.Utils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -26,10 +27,10 @@ import static net.rptools.data.Constants.TEMPLATE_DATA;
 public class TestServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(TestServlet.class);
     private final Template template;
-    private final String datasetName = Config.getString(Config.DATASET_NAME);
-    private final String viewAs = Config.getString(Config.VIEW_AS);
+    private final String datasetName = Pref.getString(Config.DATASET_NAME);
+    private final String viewAs = Pref.getString(Config.VIEW_AS);
 
-    private static final ObjectNode DATASETS = Config.getObjectNode(Config.DATASETS).deepCopy();
+    private static final ObjectNode DATASETS = Pref.getObjectNode(Config.DATASETS).deepCopy();
     private static final ObjectReader TEMPLATE_UPDATER = OBJECT_MAPPER.readerForUpdating(TEMPLATE_DATA);
     public TestServlet(Template template){
         super();
@@ -39,7 +40,7 @@ public class TestServlet extends HttpServlet {
     private void filterProperties(){
         final String view = TEMPLATE_DATA.get("viewAs").asText();
         final boolean isNpc = TEMPLATE_DATA.get("tokenType").asText().equalsIgnoreCase("npc");
-        final ArrayNode properties = Config.getObjectNode(TEMPLATE_DATA.get("datasetName").asText()).get("properties").deepCopy();
+        final ArrayNode properties = Pref.getObjectNode(TEMPLATE_DATA.get("datasetName").asText()).get("properties").deepCopy();
         switch (view) {
             case "other" -> {
                 for (int i = 0; i < properties.size(); i++) {

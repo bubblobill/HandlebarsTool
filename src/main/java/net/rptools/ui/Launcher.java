@@ -3,7 +3,8 @@ package net.rptools.ui;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import net.rptools.data.Config;
+import net.rptools.data.config.Config;
+import net.rptools.data.config.Pref;
 import net.rptools.data.Constants;
 import net.rptools.data.SheetsObject;
 import net.rptools.util.WatchFolder;
@@ -68,7 +69,7 @@ public class Launcher extends JDialog {
         getRootPane().setDefaultButton(serverStart);
         setModal(true);
 
-        configFile.setText(Config.getConfigFile().getPath());
+        configFile.setText(Pref.getConfigFile().toString());
         setURI();
         initThemeCombo();
         initLocationCombo();
@@ -81,14 +82,14 @@ public class Launcher extends JDialog {
         hyperlink.setCursor(new Cursor(Cursor.HAND_CURSOR));
         hyperlink.addActionListener(_ -> onHyperlink());
 
-        folderWatchCheckBox.setSelected(Config.getBoolean(Config.WATCH_FOLDER));
+        folderWatchCheckBox.setSelected(Pref.getBoolean(Config.WATCH_FOLDER));
         folderWatchCheckBox.addActionListener(_ -> onWatchFolder());
-        port.setText(String.valueOf(Config.getInt(Config.SERVER_PORT)));
+        port.setText(String.valueOf(Pref.getInt(Config.SERVER_PORT)));
         port.addPropertyChangeListener("value", this::onPortChange);
         changeButton.addActionListener(_ -> onSelectFolder());
         editButton.addActionListener(_ -> onEditData());
         createButton.addActionListener(_ -> onCreate());
-        setSelectedFolder(Config.getPath(Config.TEMPLATE_FOLDER));
+        setSelectedFolder(Pref.getPath(Config.TEMPLATE_FOLDER));
 
         resetButton.addActionListener(_ -> onReset());
         serverStart.addActionListener(_ -> onServerStart());
@@ -107,13 +108,13 @@ public class Launcher extends JDialog {
     }
 
     private void initThemeCombo() {
-        List<String> themeList = Config.getList(Config.THEME_CSS);
+        List<String> themeList = Pref.getList(Config.THEME_CSS);
         ComboBoxModel<String> model = new DefaultComboBoxModel<>(themeList.toArray(String[]::new));
         themeCombo.setModel(model);
-        themeCombo.setSelectedItem(Config.getString(Config.THEME));
+        themeCombo.setSelectedItem(Pref.getString(Config.THEME));
         themeCombo.addItemListener((il) -> {
             if (il.getStateChange() == ItemEvent.SELECTED) {
-                Config.set(Config.THEME, il.getItem());
+                Pref.set(Config.THEME, il.getItem());
             }
         });
     }
@@ -122,13 +123,13 @@ public class Launcher extends JDialog {
         ComboBoxModel<Constants.StatSheetLocation> model = new DefaultComboBoxModel<>(Constants.StatSheetLocation.values());
         locationCombo.setModel(model);
         locationCombo.setSelectedItem(Arrays.stream(Constants.StatSheetLocation.values())
-                .filter(statSheetLocation -> statSheetLocation.className().equalsIgnoreCase(Config.getString(Config.LOCATION)))
+                .filter(statSheetLocation -> statSheetLocation.className().equalsIgnoreCase(Pref.getString(Config.LOCATION)))
                 .findFirst()
                 .orElse(Constants.StatSheetLocation.BOTTOM_LEFT));
         locationCombo.addItemListener((il) -> {
             if (il.getStateChange() == ItemEvent.SELECTED) {
                 Constants.StatSheetLocation location = (Constants.StatSheetLocation) il.getItem();
-                Config.set(Config.LOCATION, location.className());
+                Pref.set(Config.LOCATION, location.className());
             }
         });
     }
@@ -153,7 +154,7 @@ public class Launcher extends JDialog {
     };
 
     private void onWatchFolder() {
-        Config.set(Config.WATCH_FOLDER, folderWatchCheckBox.isSelected());
+        Pref.set(Config.WATCH_FOLDER, folderWatchCheckBox.isSelected());
     }
 
     private void onHyperlink() {
@@ -166,7 +167,7 @@ public class Launcher extends JDialog {
 
     private void onReset() {
         if (Utils.prompt(this, "This will reset everything and lose your custom data.\n You might want to consider editing the config file instead.\nContinue with reset?")) {
-            Config.reset();
+            Pref.reset();
         }
     }
 
@@ -178,7 +179,7 @@ public class Launcher extends JDialog {
 
     private void onSelectFolder() {
         SheetsObject.selectFolder(this);
-        setSelectedFolder(Config.getPath(Config.TEMPLATE_FOLDER));
+        setSelectedFolder(Pref.getPath(Config.TEMPLATE_FOLDER));
     }
 
     private void setSelectedFolder(Path folderPath) {
@@ -187,7 +188,7 @@ public class Launcher extends JDialog {
                 File folder = folderPath.toAbsolutePath().toFile();
                 selectedFolder.setText(folder.toString());
                 serverStart.setEnabled(true);
-                Config.set(Config.TEMPLATE_FOLDER, folder);
+                Pref.set(Config.TEMPLATE_FOLDER, folder);
                 if (watchFolder != null) {
                     WatchFolder.stop();
                 }
@@ -201,11 +202,11 @@ public class Launcher extends JDialog {
     public void onEditData() {
         EditPropertyTypes editPropertyTypes = new EditPropertyTypes();
         editPropertyTypes.setVisible(true);
-        List<String> datasetNames = Config.getList(Config.DATASETS);
+        List<String> datasetNames = Pref.getList(Config.DATASETS);
         tokenDataset.setModel(new DefaultComboBoxModel<>(datasetNames.toArray(String[]::new)));
-        String selectName = Config.getString(Config.DATASET_DEFAULT);
+        String selectName = Pref.getString(Config.DATASET_DEFAULT);
         if (selectName == null || selectName.isBlank()) {
-            selectName = Config.getString(Config.DATASET_NAME);
+            selectName = Pref.getString(Config.DATASET_NAME);
         }
         if (datasetNames.contains(selectName)) {
             tokenDataset.getModel().setSelectedItem(selectName);
@@ -224,7 +225,7 @@ public class Launcher extends JDialog {
                 port.setText(String.valueOf(MAX_PORT));
                 return;
             }
-            Config.set(Config.SERVER_PORT, i);
+            Pref.set(Config.SERVER_PORT, i);
             setURI();
         } catch (NumberFormatException ex) {
             port.setText((String) e.getOldValue());
@@ -232,7 +233,7 @@ public class Launcher extends JDialog {
     }
 
     private void setURI() {
-        uri = URI.create(String.format("http://localhost:%d/testSpace.hbs", Config.getInt(Config.SERVER_PORT)));
+        uri = URI.create(String.format("http://localhost:%d/testSpace.hbs", Pref.getInt(Config.SERVER_PORT)));
     }
 
     private void onServerStart() {
@@ -254,8 +255,8 @@ public class Launcher extends JDialog {
     private boolean start() {
         boolean success;
         try {
-            if(Config.getBoolean(Config.WATCH_FOLDER)) {
-                watchFolder = new WatchFolder(Config.getPath(Config.TEMPLATE_FOLDER));
+            if(Pref.getBoolean(Config.WATCH_FOLDER)) {
+                watchFolder = new WatchFolder(Pref.getPath(Config.TEMPLATE_FOLDER));
                 success = watchFolder.start();
                 watchFolder.addPropertyChangeListener(SheetsObject.propertyChangeListener);
 
@@ -306,11 +307,11 @@ public class Launcher extends JDialog {
 
 
     private void createUIComponents() {
-        List<String> datasetNames = Config.getList(Config.DATASETS);
+        List<String> datasetNames = Pref.getList(Config.DATASETS);
         tokenDataset = new JComboBox<>(new DefaultComboBoxModel<>(datasetNames.toArray(String[]::new)));
         tokenDataset.addItemListener((il) -> {
             if (il.getStateChange() == ItemEvent.SELECTED) {
-                Config.set(Config.DATASET_NAME, il.getItem());
+                Pref.set(Config.DATASET_NAME, il.getItem());
             }
         });
     }
@@ -374,7 +375,7 @@ public class Launcher extends JDialog {
         configFile.setText("");
         panel1.add(configFile, new GridConstraints(10, 1, 1, 8, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label5 = new JLabel();
-        label5.setText("Config File");
+        label5.setText("Pref File");
         panel1.add(label5, new GridConstraints(10, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label6 = new JLabel();
         label6.setText("Templates Folder");

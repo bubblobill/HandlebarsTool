@@ -1,10 +1,9 @@
-package net.rptools.data;
+package net.rptools.data.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import net.rptools.util.ConfigStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,31 +12,12 @@ import java.nio.file.Path;
 import java.util.*;
 
 @SuppressWarnings("unused")
-public class Config {
-    private static final Logger log = LoggerFactory.getLogger(Config.class);
-    private static final Path CONFIG_PATH = Path.of(System.getProperty("user.dir"), File.separator, ".config.json").toAbsolutePath();
-    public static final String SYSTEM_PROPERTY_FILE = Config.class.getName() + ".file";
+public class Pref {
+    private static final Logger log = LoggerFactory.getLogger(Pref.class);
 
-    public static final String RESET = "reset";
-    public static final String BACKGROUND = "background";
-    public static final String DATASET_NAME = "datasetName";
-    public static final String DATASET_NAMES = "datasetNames";
-    public static final String DATASET_DEFAULT = "datasetDefault";
-    public static final String DATASETS = "datasets";
-    public static final String TEMPLATE_FOLDER = "folder";
-    public static final String LIB_FILE = "libFile";
-    public static final String SHEET = "sheet";
-    public static final String LOCATION = "statSheetLocation";
-    public static final String HANDLEBARS_PORT = "handlebarsPort";
-    public static final String SERVER_PORT = "serverPort";
-    public static final String THEME = "theme";
-    public static final String THEME_CSS = "themeCss";
-    public static final String VIEW_AS = "viewAs";
-    public static final String WATCH_FOLDER = "watchFolder";
+    private static final ConfigStore CONFIG_STORE = new ConfigStore();
 
-    private static final ConfigStore CONFIG_STORE = new ConfigStore(CONFIG_PATH);
-
-    public static File getConfigFile(){
+    public static Path getConfigFile(){
         return CONFIG_STORE.getConfigFile();
     }
     public static void reset(){
@@ -110,7 +90,7 @@ public class Config {
 
     public static List<String> getList(String key) {
         List<String> list = new ArrayList<>();
-        getObjectNode(key)
+        get(key)
                 .fieldNames()
                 .forEachRemaining(list::add);
         return list;

@@ -1,6 +1,7 @@
 package net.rptools.util;
 
-import net.rptools.data.Config;
+import net.rptools.data.config.Config;
+import net.rptools.data.config.Pref;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,7 @@ public class Bones {
     private static final Logger log = LoggerFactory.getLogger(Bones.class);
     private static File tempFile = null;
     private static Path sheetsFolder;
-    private static final JFileChooser FC = new JFileChooser(Config.getString(Config.TEMPLATE_FOLDER));
+    private static final JFileChooser FC = new JFileChooser(Pref.getString(Config.TEMPLATE_FOLDER));
     private static final List<String> FILE_LIST = Arrays.stream(new String[]{
             "/data/library/public/sheets/attributions.txt",
             "/data/library/public/sheets/copyright.txt",

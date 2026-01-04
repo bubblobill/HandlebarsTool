@@ -3,6 +3,8 @@ package net.rptools.data;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.rptools.data.config.Config;
+import net.rptools.data.config.Pref;
 import net.rptools.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +28,7 @@ public class LibraryJSON {
 
 
     static void createLibFile() {
-        if (!Config.getBoolean(Config.LIB_FILE)) {
+        if (!Pref.getBoolean(Config.LIB_FILE)) {
             return;
         }
         if (Utils.prompt(null, "Create associated Add-On JSON file in root folder?")) {
@@ -37,24 +39,24 @@ public class LibraryJSON {
             } catch (Exception e) {
                 Utils.whoops(e);
                 log.error(e.getLocalizedMessage(), e);
-                Config.set(Config.LIB_FILE, false);
+                Pref.set(Config.LIB_FILE, false);
             }
         } else {
-            Config.set(Config.LIB_FILE, false);
+            Pref.set(Config.LIB_FILE, false);
         }
     }
 
     static void writeLibFile() {
-        if (!Config.getBoolean(Config.LIB_FILE)) {
+        if (!Pref.getBoolean(Config.LIB_FILE)) {
             return;
         }
         try {
             OBJECT_MAPPER.writeValue(new FileOutputStream(jsonFilePath.toFile()), libObject);
-            Config.set(Config.LIB_FILE, jsonFilePath);
+            Pref.set(Config.LIB_FILE, jsonFilePath);
         } catch (Exception e) {
             Utils.whoops(e);
             log.error(e.getLocalizedMessage(), e);
-            Config.set(Config.LIB_FILE, false);
+            Pref.set(Config.LIB_FILE, false);
         }
     }
 
