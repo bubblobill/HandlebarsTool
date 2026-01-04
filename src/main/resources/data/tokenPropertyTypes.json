@@ -1,56 +1,4 @@
 {
-  "Default" : {
-    "tokenType" : "pc",
-    "name" : "Name",
-    "label" : "Label",
-    "gmName" : "GM Name",
-    "speechName" : "Speech Name",
-    "image" : "./image/image.png",
-    "portrait" : "./image/token.png",
-    "handout" : "./image/token.png",
-    "portraitWidth" : 150,
-    "portraitHeight" : 150,
-    "notes" : "Player notes",
-    "notesType" : "text/plain",
-    "gmNotes" : "GM Notes",
-    "gmNotesType" : "text/plain",
-    "properties" : [ {
-      "gmOnly" : false,
-      "ownerOnly" : false,
-      "name" : "hitPoints",
-      "displayName" : "Hit Points",
-      "shortName" : "HP",
-      "value" : "27"
-    }, {
-      "gmOnly" : false,
-      "ownerOnly" : false,
-      "name" : "armourClass",
-      "displayName" : "Armour Class",
-      "shortName" : "AC",
-      "value" : "17"
-    }, {
-      "gmOnly" : false,
-      "ownerOnly" : false,
-      "name" : "weapon",
-      "displayName" : "Weapon",
-      "shortName" : "WP",
-      "value" : "Axe"
-    }, {
-      "gmOnly" : false,
-      "ownerOnly" : false,
-      "name" : "damage",
-      "displayName" : "Damage",
-      "shortName" : "Dmg",
-      "value" : "2d8"
-    }, {
-      "gmOnly" : false,
-      "ownerOnly" : false,
-      "name" : "",
-      "displayName" : "",
-      "shortName" : "",
-      "value" : "2d8"
-    } ]
-  },
   "Basic" : {
     "tokenType" : "pc",
     "name" : "Name",
@@ -167,7 +115,8 @@
     "notesType" : "text/plain",
     "gmNotes" : "GM Notes",
     "gmNotesType" : "text/plain",
-    "properties" : [ {
+    "properties" : [
+      {
       "gmOnly" : true,
       "ownerOnly" : false,
       "name" : "Strength",
@@ -268,7 +217,8 @@
     "notesType" : "text/plain",
     "gmNotes" : "GM Notes",
     "gmNotesType" : "text/plain",
-    "properties" : [ {
+    "properties" : [
+      {
       "gmOnly" : true,
       "ownerOnly" : false,
       "name" : "Strength",

@@ -2,11 +2,9 @@ package net.rptools.data.config;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import net.rptools.data.Constants;
 import net.rptools.util.Utils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -45,13 +43,17 @@ public class ConfigStore {
         try {
             defaultsNode = (ObjectNode) OBJECT_MAPPER.readTree(IOUtils.resourceToString(DEFAULT_CONFIG_PATH, StandardCharsets.UTF_8));
             defaultsNode.set(Config.THEME_CSS, OBJECT_MAPPER.readTree(IOUtils.resourceToString(THEME_CSS_PATH, StandardCharsets.UTF_8)));
-            defaultsNode.set(Config.DATASETS, OBJECT_MAPPER.readTree(IOUtils.resourceToString(DEFAULT_DATASETS_PATH, StandardCharsets.UTF_8)));
+            defaultsNode.set(DATASETS, OBJECT_MAPPER.readTree(IOUtils.resourceToString(DEFAULT_DATASETS_PATH, StandardCharsets.UTF_8)));
+            defaultsNode.put(TEMPLATE_FOLDER, Path.of(System.getProperty("user.dir")).toAbsolutePath().toString());
+            ArrayNode datasetNames = OBJECT_MAPPER.createArrayNode();
+            defaultsNode.set(DATASET_NAMES, datasetNames);
+            defaultsNode.get(Config.DATASETS).fieldNames().forEachRemaining(datasetNames::add);
         } catch (IOException e) {
             log.error(e.getLocalizedMessage(), e);
             defaultsNode = OBJECT_MAPPER.createObjectNode();
         }
         DEFAULTS = defaultsNode;
-        ObjectNode rootNode = defaultsNode.deepCopy();
+        ObjectNode rootNode = OBJECT_MAPPER.createObjectNode();
         if (!Files.exists(FILE_PATH)) {
             // create new config file
             try {
@@ -70,11 +72,11 @@ public class ConfigStore {
         } else if (Files.isReadable(FILE_PATH)) {
             // load from existing config file
             try {
-                ObjectReader updateReader = OBJECT_MAPPER.readerForUpdating(rootNode);
-                rootNode = (ObjectNode) updateReader.readTree(IOUtils.toString(FILE_PATH.toUri(), StandardCharsets.UTF_8));
+                rootNode = (ObjectNode) OBJECT_MAPPER.readTree(IOUtils.toString(FILE_PATH.toUri(), StandardCharsets.UTF_8));
                 loaded.set(true);
             } catch (IOException e) {
                 useBackingFile.set(false);
+                rootNode.removeAll();
                 log.error("Unable to read existing config file.\n{}, {}", e.getLocalizedMessage(), e);
             }
             if (Files.isWritable(FILE_PATH)) {
@@ -88,7 +90,13 @@ public class ConfigStore {
             useBackingFile.set(false);
             rootNode = DEFAULTS.deepCopy();
         }
-        ROOT = rootNode;
+        ROOT = rootNode.deepCopy();
+        FIELD_NAMES.forEach(name -> {
+            JsonNode node = ROOT.get(name);
+            if(node == null || node.isNull() || node.isMissingNode() || node.isEmpty()){
+                ROOT.set(name, DEFAULTS.get(name));
+            }
+        });
     }
 
 
@@ -96,8 +104,12 @@ public class ConfigStore {
         if(ROOT.get(RESET).asBoolean()){
             reset();
         }
-        ROOT.fieldNames().forEachRemaining(name -> KEYS.addAll(addKey(name, KEYS)));
-        Runtime.getRuntime().addShutdownHook(new Thread(this::save));
+        ROOT.get(DATASETS).fieldNames().forEachRemaining(datasetName -> ((ArrayNode)ROOT.get(DATASET_NAMES)).add(datasetName));
+
+        if(ROOT.get(DATASET_NAME).asText().isBlank()){
+            set(DATASET_NAME, getOrDefault(ROOT.get(DATASET_NAMES).get(0), ROOT.get(DATASET_DEFAULT).asText()));
+        }
+//        ROOT.fieldNames().forEachRemaining(name -> KEYS.addAll(addKey(name, KEYS)));
     }
 
    /* private void setDefaults() {

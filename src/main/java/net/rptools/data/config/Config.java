@@ -1,6 +1,7 @@
 package net.rptools.data.config;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -25,9 +26,15 @@ public class Config {
     public static final List<String> FIELD_NAMES;
 
     static {
-        FIELD_NAMES = Arrays.stream(Config.class.getDeclaredFields())
-                .filter(field -> field.getType().equals(String.class))
-                .map(Field::getName)
-                .toList();
+        List<String> list = new ArrayList<>();
+        for (Field field : Config.class.getDeclaredFields()) {
+            if (field.getType().isAssignableFrom(String.class)) {
+                try {
+                    list.add(field.get(field).toString());
+                } catch (IllegalAccessException | IllegalArgumentException _) {
+                }
+            }
+        }
+        FIELD_NAMES = list;
     }
 }

@@ -16,8 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.basic.BasicTextAreaUI;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyleContext;
 import java.awt.*;
@@ -135,6 +137,7 @@ public class Launcher extends JDialog {
     }
 
     private static final MouseListener openFile = new MouseAdapter() {
+        Color background, foreground;
         @Override
         public void mouseClicked(MouseEvent e) {
             try {

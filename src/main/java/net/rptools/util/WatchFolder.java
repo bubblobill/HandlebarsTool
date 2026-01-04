@@ -2,7 +2,10 @@ package net.rptools.util;
 
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
-import net.rptools.data.Constants;
+
+import static net.rptools.data.Constants.*;
+import static net.rptools.data.Constants.State.*;
+
 import org.apache.commons.lang3.ThreadUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +18,6 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -31,8 +33,8 @@ public class WatchFolder {
     private static final Map<WatchKey, Path> KEYS = new HashMap<>();
     private static final List<Path> PATHS = new ArrayList<>();
     private static boolean trace;
-    private static CompletableFuture<Constants.State> watchFuture;
-    private static final AtomicReference<Constants.State> STATE = new AtomicReference<>();
+    private static CompletableFuture<State> watchFuture;
+    private static final AtomicReference<State> STATE = new AtomicReference<>();
     private static Path WATCH_FOLDER;
 
     public static final ConcurrentLinkedQueue<Path> queue = new ConcurrentLinkedQueue<>();
@@ -82,19 +84,25 @@ public class WatchFolder {
         }
     }
 
-    private static final Supplier<Constants.State> VALIDATE_FOLDER = () -> {
+    private static final Supplier<State> VALIDATE_FOLDER = () -> {
         if (WATCH_FOLDER == null) {
-            throw new RuntimeException("Error: Invalid folder(folder is null)");
-        } else if (!WATCH_FOLDER.toFile().exists()) {
-            throw new RuntimeException("Error: Invalid folder(folder doesn't exist)");
-        } else if (!WATCH_FOLDER.toFile().isDirectory()) {
-            throw new RuntimeException("Error: Invalid folder(not a folder)");
+            log.error("Error: Invalid folder(folder is null)");
+            return FAILED;
+        } else if (!Files.exists(WATCH_FOLDER)) {
+            log.error("Error: Invalid folder(folder doesn't exist)");
+            return FAILED;
+        } else if (!Files.isDirectory(WATCH_FOLDER)) {
+            log.error("Error: Invalid folder(not a folder)");
+            return FAILED;
+        } else if (!Files.isReadable(WATCH_FOLDER)) {
+            log.error("Error: Invalid folder(no read access)");
+            return FAILED;
         }
         log.info("Watch folder is valid");
-        return Constants.State.STARTING;
+        return STARTING;
     };
-    private static final Function<Constants.State, Constants.State> CREATE_SERVICE = state -> {
-        if (state.equals(Constants.State.FAILED)) {
+    private static final Function<State, State> CREATE_SERVICE = state -> {
+        if (state.equals(FAILED)) {
             return state;
         }
         try {
@@ -102,11 +110,12 @@ public class WatchFolder {
             log.info("WatchService created");
             return state;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error("Error creating WatchService: {}", e.getLocalizedMessage(), e);
+            return FAILED;
         }
     };
-    private static final Function<Constants.State, Constants.State> SCAN_FOLDERS = state -> {
-        if (state.equals(Constants.State.FAILED)) {
+    private static final Function<State, State> SCAN_FOLDERS = state -> {
+        if (state.equals(FAILED)) {
             return state;
         }
         if (PATHS.isEmpty()) {
@@ -121,46 +130,43 @@ public class WatchFolder {
                 }
                 return state;
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                log.error("Error scanning folders: {}", e.getLocalizedMessage(), e);
+                return FAILED;
             }
         } else {
-            return Constants.State.STARTING;
+            return State.STARTING;
         }
     };
-    private static final Function<Constants.State, Constants.State> REGISTER_FOLDERS = state -> {
-        if (state.equals(Constants.State.FAILED)) {
+    private static final Function<State, State> REGISTER_FOLDERS = state -> {
+        if (state.equals(FAILED)) {
             return state;
         }
-        log.info("Register folder and sub-directories: {} ...", WATCH_FOLDER);
+        log.info("Registering folder and sub-directories: {} ...", WATCH_FOLDER);
         try {
             registerFolderRecursive(WATCH_FOLDER);
             log.info("Registrations done.");
-            return Constants.State.READY;
+            return State.READY;
         } catch (Exception e) {
-            log.error(e.getLocalizedMessage(), e);
-            throw new RuntimeException(e);
+            log.error("Error registering folder: {}", e.getLocalizedMessage(), e);
+            return FAILED;
         }
     };
 
     private void initialise() {
-        if(Pref.getBoolean(Config.WATCH_FOLDER)) {
-            STATE.set(Constants.State.STARTING);
+        if (Pref.getBoolean(Config.WATCH_FOLDER)) {
+            STATE.set(State.STARTING);
             watchFuture = CompletableFuture.supplyAsync(VALIDATE_FOLDER)
-                    .handleAsync(handle)
                     .thenApplyAsync(CREATE_SERVICE)
-                    .handleAsync(handle)
                     .thenApplyAsync(SCAN_FOLDERS)
-                    .handleAsync(handle)
-                    .thenApplyAsync(REGISTER_FOLDERS)
-                    .handleAsync(handle);
+                    .thenApplyAsync(REGISTER_FOLDERS);
             try {
                 STATE.set(watchFuture.get());
             } catch (InterruptedException | ExecutionException e) {
                 Utils.whoops(e);
-                STATE.set(Constants.State.FAILED);
+                STATE.set(FAILED);
             }
         } else {
-            STATE.set(Constants.State.FAILED);
+            STATE.set(FAILED);
         }
     }
 
@@ -215,16 +221,16 @@ public class WatchFolder {
     /**
      * Process all events for keys queued to the watcher
      */
-    private final Supplier<Constants.State> PROCESS_EVENTS = () -> {
-        while (STATE.get().equals(Constants.State.STARTED) && !KEYS.isEmpty()) {
+    private final Supplier<State> PROCESS_EVENTS = () -> {
+        while (STATE.get().equals(STARTED) && !KEYS.isEmpty()) {
             // wait for key to be signalled
             WatchKey key;
             try {
                 key = watcher.take();
             } catch (ClosedWatchServiceException e) {
-                return Constants.State.FINISHED;
+                return FINISHED;
             } catch (InterruptedException e) {
-                return Constants.State.FAILED;
+                return FAILED;
             }
 
             Path dir = KEYS.get(key);
@@ -279,26 +285,17 @@ public class WatchFolder {
                 }
             }
         }
-        return Constants.State.FINISHED;
-    };
-
-    private static final BiFunction<Constants.State, Throwable, Constants.State> handle = (s, t) -> {
-        if (t != null) {
-            log.error("Watcher process failed: {}", t.getLocalizedMessage());
-            return Constants.State.FAILED;
-        } else {
-            return s;
-        }
+        return FINISHED;
     };
 
     public boolean start() {
-        final Constants.State state = STATE.get();
+        final State state = STATE.get();
         boolean val;
         switch (state) {
             case STARTED -> val = true;
             case STARTING -> {
                 int sensible = 8;
-                while (STATE.get().equals(Constants.State.STARTING) && sensible > 0) {
+                while (STATE.get().equals(State.STARTING) && sensible > 0) {
                     sensible--;
                     try {
                         ThreadUtils.sleep(Duration.ofMillis(300));
@@ -309,7 +306,7 @@ public class WatchFolder {
                 val = start();
             }
             case READY -> {
-                STATE.set(Constants.State.STARTED);
+                STATE.set(State.STARTED);
                 watchFuture = CompletableFuture.supplyAsync(PROCESS_EVENTS);
                 val = start();
             }
@@ -317,9 +314,7 @@ public class WatchFolder {
                 // need to recreate the service and register everything again
                 watchFuture = CompletableFuture.supplyAsync(() -> state)
                         .thenApplyAsync(CREATE_SERVICE)
-                        .handleAsync(handle)
-                        .thenApplyAsync(REGISTER_FOLDERS)
-                        .handleAsync(handle);
+                        .thenApplyAsync(REGISTER_FOLDERS);
                 val = start();
             }
             case null, default -> val = false;
@@ -328,23 +323,22 @@ public class WatchFolder {
     }
 
     public static void stop() {
-        Constants.State state = STATE.get();
-        if (state.equals(Constants.State.FAILED) || state.equals(Constants.State.FINISHED) || state.equals(Constants.State.STOPPING)) {
+        State state = STATE.get();
+        if (state.equals(FAILED) || state.equals(State.FINISHED) || state.equals(STOPPING)) {
             return;
         }
         log.info("stopping watcher");
 
         watchFuture.thenApplyAsync(_ -> {
                     try {
-                        STATE.set(Constants.State.STOPPING);
+                        STATE.set(STOPPING);
                         watcher.close();
                         KEYS.clear();
-                        return Constants.State.FINISHED;
+                        return State.FINISHED;
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        return STOPPING;
                     }
                 })
-                .handle(handle)
                 .cancel(true);
     }
 }
