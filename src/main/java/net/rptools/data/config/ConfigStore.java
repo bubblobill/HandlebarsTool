@@ -283,25 +283,18 @@ public class ConfigStore {
                 key = key.substring(key.indexOf('/') + 1);
             }
             if (node instanceof ObjectNode objectNode) {
-                if (value instanceof Boolean v) {
-                    objectNode.set(key, JsonNodeFactory.instance.booleanNode(v));
-                } else if (value instanceof byte[] v) {
-                    objectNode.set(key, JsonNodeFactory.instance.binaryNode(v));
-                } else if (value instanceof Double v) {
-                    objectNode.set(key, JsonNodeFactory.instance.numberNode(v));
-                } else if (value instanceof Float v) {
-                    objectNode.set(key, JsonNodeFactory.instance.numberNode(v));
-                } else if (value instanceof Integer v) {
-                    objectNode.set(key, JsonNodeFactory.instance.numberNode(v));
-                } else if (value instanceof Long v) {
-                    objectNode.set(key, JsonNodeFactory.instance.numberNode(v));
-                } else if (value instanceof JsonNode v) {
-                    objectNode.set(key, v);
-                } else if (value instanceof String v) {
-                    objectNode.set(key, JsonNodeFactory.instance.textNode(v));
-                } else {
-                    objectNode.set(key, JsonNodeFactory.instance.textNode(value.toString()));
+                switch (value) {
+                    case Boolean v -> objectNode.set(key, JsonNodeFactory.instance.booleanNode(v));
+                    case byte[] v -> objectNode.set(key, JsonNodeFactory.instance.binaryNode(v));
+                    case Double v -> objectNode.set(key, JsonNodeFactory.instance.numberNode(v));
+                    case Float v -> objectNode.set(key, JsonNodeFactory.instance.numberNode(v));
+                    case Integer v -> objectNode.set(key, JsonNodeFactory.instance.numberNode(v));
+                    case Long v -> objectNode.set(key, JsonNodeFactory.instance.numberNode(v));
+                    case JsonNode v -> objectNode.set(key, v);
+                    case String v -> objectNode.set(key, JsonNodeFactory.instance.textNode(v));
+                    default -> objectNode.set(key, JsonNodeFactory.instance.textNode(value.toString()));
                 }
+                log.info("Config set: {} -> {}", key, OBJECT_MAPPER.valueToTree(value));
             }
         }
         save();
