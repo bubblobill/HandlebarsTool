@@ -8,6 +8,7 @@ import com.github.jknack.handlebars.Context;
 import com.github.jknack.handlebars.HandlebarsException;
 import com.github.jknack.handlebars.JsonNodeValueResolver;
 import com.github.jknack.handlebars.Template;
+import net.rptools.data.TemplateData;
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
 import net.rptools.util.Utils;
@@ -22,56 +23,25 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 
 import static net.rptools.data.Constants.OBJECT_MAPPER;
-import static net.rptools.data.Constants.TEMPLATE_DATA;
+import static net.rptools.data.TemplateData.TEMPLATE_DATA;
 
 public class TestServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(TestServlet.class);
     private final Template template;
-    private final String datasetName = Pref.getString(Config.DATASET_NAME);
-    private final String viewAs = Pref.getString(Config.VIEW_AS);
 
-    private static final ObjectNode DATASETS = Pref.getObjectNode(Config.DATASETS).deepCopy();
     private static final ObjectReader TEMPLATE_UPDATER = OBJECT_MAPPER.readerForUpdating(TEMPLATE_DATA);
     public TestServlet(Template template){
         super();
         this.template = template;
     }
 
-    private void filterProperties(){
-        final String view = TEMPLATE_DATA.get("viewAs").asText();
-        final boolean isNpc = TEMPLATE_DATA.get("tokenType").asText().equalsIgnoreCase("npc");
-        final ArrayNode properties = Pref.getObjectNode(TEMPLATE_DATA.get("datasetName").asText()).get("properties").deepCopy();
-        switch (view) {
-            case "other" -> {
-                for (int i = 0; i < properties.size(); i++) {
-                    ObjectNode property = (ObjectNode) properties.get(i);
-                    if (property.get("ownerOnly").asBoolean() || property.get("gmOnly").asBoolean()) {
-                        properties.remove(i);
-                    }
-                }
-            }
-            case "player" -> {
-                for (int i = 0; i < properties.size(); i++) {
-                    ObjectNode property = (ObjectNode) properties.get(i);
-                    if (property.get("gmOnly").asBoolean() || (isNpc && property.get("ownerOnly").asBoolean())) {
-                        properties.remove(i);
-                    }
-                }
-            }
-        }
-        TEMPLATE_DATA.set("properties", properties);
 
-    }
     @Override
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response) {
         log.info("Test Server: POST Request - > {}", request.getRequestURI());
         try (BufferedReader reader = request.getReader()) { // try-with-resources auto-closes the reader
             TEMPLATE_UPDATER.readValue(reader);
-            if(!TEMPLATE_DATA.get("viewAs").asText().equalsIgnoreCase(viewAs) ||
-               !TEMPLATE_DATA.get("datasetName").asText().equalsIgnoreCase(datasetName)) {
-                TEMPLATE_DATA.setAll((ObjectNode) DATASETS.get(TEMPLATE_DATA.get("datasetName").asText()).deepCopy());
-                filterProperties();
-            }
+            TemplateData.filterProperties();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

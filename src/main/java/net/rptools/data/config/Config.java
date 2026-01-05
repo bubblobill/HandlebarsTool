@@ -1,18 +1,19 @@
 package net.rptools.data.config;
 
+import javax.swing.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Config {
     public static final String RESET = "reset";
+    public static final String ADD_ON_FOLDER = "addonFolder";
     public static final String BACKGROUND = "background";
     public static final String DATASET_NAME = "datasetName";
     public static final String DATASET_NAMES = "datasetNames";
     public static final String DATASET_DEFAULT = "datasetDefault";
     public static final String DATASETS = "datasets";
-    public static final String TEMPLATE_FOLDER = "folder";
+    public static final String TEMPLATE_FOLDER = "templateFolder";
     public static final String LIB_FILE = "libFile";
     public static final String SHEET = "sheet";
     public static final String LOCATION = "statSheetLocation";

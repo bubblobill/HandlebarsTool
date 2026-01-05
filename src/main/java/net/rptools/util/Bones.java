@@ -1,5 +1,6 @@
 package net.rptools.util;
 
+import net.rptools.data.config.Chooser;
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
 import org.apache.commons.io.IOUtils;
@@ -19,11 +20,12 @@ import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static net.rptools.data.config.Config.ADD_ON_FOLDER;
+
 public class Bones {
     private static final Logger log = LoggerFactory.getLogger(Bones.class);
     private static File tempFile = null;
     private static Path sheetsFolder;
-    private static final JFileChooser FC = new JFileChooser(Pref.getString(Config.TEMPLATE_FOLDER));
     private static final List<String> FILE_LIST = Arrays.stream(new String[]{
             "/data/library/public/sheets/attributions.txt",
             "/data/library/public/sheets/copyright.txt",
@@ -72,10 +74,6 @@ public class Bones {
             """;
 
     static {
-        FC.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        FC.setMultiSelectionEnabled(false);
-        FC.setDialogTitle("Choose the Root Directory");
-
         try {
             String content = IOUtils.resourceToString("/data/library/public/sheets/copyright.txt", StandardCharsets.UTF_8);
             content = MessageFormat.format(content, System.getProperty("user.name"), LocalDateTime.now().getYear());
@@ -89,8 +87,8 @@ public class Bones {
 
     public static boolean createBones() {
         if (Utils.prompt(null, structure)) {
-            if(FC.showDialog(null, "Select Folder") == JFileChooser.APPROVE_OPTION) {
-                Path rootFolder = FC.getSelectedFile().toPath();
+            if(Chooser.selectAddonRootFolder(null)) {
+                Path rootFolder = Pref.getPath(ADD_ON_FOLDER);
                 if (Utils.prompt(null, String.format("Create folder structure in:\n %s", rootFolder.toAbsolutePath()))) {
                     for (String filePath : FILE_LIST) {
                         try {
@@ -116,16 +114,16 @@ public class Bones {
                             return false;
                         }
                     }
-                    sheetsFolder = Paths.get(rootFolder.toAbsolutePath().toString(), "library", "public", "sheets");
+                    sheetsFolder = rootFolder.toAbsolutePath().resolve("library", "public", "sheets");
+                    Pref.set(ADD_ON_FOLDER, rootFolder);
+                    Pref.set(Config.TEMPLATE_FOLDER, sheetsFolder);
                     return true;
+                }
+                else {
+                    Pref.set(ADD_ON_FOLDER, null);
                 }
             }
         }
         return false;
     }
-
-    public static Path getSheetsFolder() {
-        return sheetsFolder;
-    }
-
 }

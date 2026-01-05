@@ -30,11 +30,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static net.rptools.data.Constants.TEMPLATE_DATA;
+import static net.rptools.data.TemplateData.TEMPLATE_DATA;
 
 public class HandlebarsServer {
     private static final Logger log = LoggerFactory.getLogger(HandlebarsServer.class);
@@ -123,6 +122,8 @@ public class HandlebarsServer {
 //        }
 //
 //    }
+    private static String theme = Pref.getString(Config.THEME);
+    private static String themeCSS = Pref.getObjectNode(Config.THEME_CSS).get(theme).asText();
 
     public class HandlebarsServlet extends HttpServlet {
         private static final Logger log = LoggerFactory.getLogger(HandlebarsServlet.class);
@@ -142,8 +143,11 @@ public class HandlebarsServer {
             Utils.commonResponseBits(response);
             try {
                 Template template = handlebars.compileInline(getTemplateText.apply(requestURI(request)));
-
-                String css = CSS_OBJECT.get(TEMPLATE_DATA.get("theme").asText()).asText();
+                String theme_ = TEMPLATE_DATA.get("theme").asText();
+                if(!theme_.equalsIgnoreCase(theme)) {
+                    theme = theme_;
+                    themeCSS = CSS_OBJECT.get(theme_).asText();
+                }
 
                 Context context = Context
                         .newBuilder(TEMPLATE_DATA)
@@ -151,10 +155,13 @@ public class HandlebarsServer {
                         .build();
 
                 Document doc = Jsoup.parse(template.apply(context));
-                if (!css.isBlank()) {
+                if (!themeCSS.isBlank()) {
                     var cssNode = doc.createElement("style");
                     cssNode.id("themeCss");
-                    cssNode.appendText(Pref.getObjectNode(Config.THEME_CSS).get(Pref.getString(Config.THEME)).asText());
+                    cssNode.appendText(Pref
+                            .getObjectNode(Config.THEME_CSS)
+                            .get(Pref.getString(Config.THEME))
+                            .asText());
                     var head = doc.head();
                     head.insertChildren(0, cssNode);
                 }

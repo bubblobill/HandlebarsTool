@@ -3,6 +3,8 @@ package net.rptools.ui;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
+import net.rptools.data.TemplateData;
+import net.rptools.data.config.Chooser;
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
 import net.rptools.data.Constants;
@@ -16,16 +18,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.basic.BasicTextAreaUI;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyleContext;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
-import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
 import java.net.URI;
@@ -91,7 +90,7 @@ public class Launcher extends JDialog {
         changeButton.addActionListener(_ -> onSelectFolder());
         editButton.addActionListener(_ -> onEditData());
         createButton.addActionListener(_ -> onCreate());
-        setSelectedFolder(Pref.getPath(Config.TEMPLATE_FOLDER));
+        setSelectedFolder();
 
         resetButton.addActionListener(_ -> onReset());
         serverStart.addActionListener(_ -> onServerStart());
@@ -176,22 +175,20 @@ public class Launcher extends JDialog {
 
     private void onCreate() {
         if (Bones.createBones()) {
-            setSelectedFolder(Bones.getSheetsFolder());
+            setSelectedFolder();
         }
     }
 
     private void onSelectFolder() {
-        SheetsObject.selectFolder(this);
-        setSelectedFolder(Pref.getPath(Config.TEMPLATE_FOLDER));
+        if(Chooser.selectTemplateFolder(this)) {
+            setSelectedFolder();
+        }
     }
 
-    private void setSelectedFolder(Path folderPath) {
-        if (folderPath != null) {
+    private void setSelectedFolder() {
             try {
-                File folder = folderPath.toAbsolutePath().toFile();
-                selectedFolder.setText(folder.toString());
+                selectedFolder.setText(Pref.getString(Config.TEMPLATE_FOLDER));
                 serverStart.setEnabled(true);
-                Pref.set(Config.TEMPLATE_FOLDER, folder);
                 if (watchFolder != null) {
                     WatchFolder.stop();
                 }
@@ -199,7 +196,6 @@ public class Launcher extends JDialog {
                 Utils.whoops(e);
                 log.error(e.getLocalizedMessage(), e);
             }
-        }
     }
 
     public void onEditData() {
@@ -256,13 +252,13 @@ public class Launcher extends JDialog {
     }
 
     private boolean start() {
-        boolean success;
+        boolean success = TemplateData.initialiseTemplateData();
         try {
             if(Pref.getBoolean(Config.WATCH_FOLDER)) {
                 watchFolder = new WatchFolder(Pref.getPath(Config.TEMPLATE_FOLDER));
                 success = watchFolder.start();
+                log.info("Watchfolder started: {}", success);
                 watchFolder.addPropertyChangeListener(SheetsObject.propertyChangeListener);
-
             } else {
                 success = true;
             }

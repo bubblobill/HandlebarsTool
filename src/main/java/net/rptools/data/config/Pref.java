@@ -101,7 +101,7 @@ public class Pref {
     }
 
     public static ArrayNode getArrayNode(String key) {
-        return getArrayNode(JsonNodeFactory.instance.arrayNode(), key);
+        return (ArrayNode) get(key);
     }
 
     public static ObjectNode getObjectNode(ObjectNode defaultValue, String... keys) {
@@ -109,7 +109,7 @@ public class Pref {
     }
 
     public static ObjectNode getObjectNode(String... keys) {
-        return getObjectNode(JsonNodeFactory.instance.objectNode(), keys);
+        return getObjectNode((ObjectNode) get(keys[0]), keys);
     }
 
     public static Path getPath(String key) {

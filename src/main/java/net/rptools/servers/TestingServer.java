@@ -29,39 +29,26 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import static net.rptools.data.Constants.OBJECT_MAPPER;
-import static net.rptools.data.Constants.TEMPLATE_DATA;
+import static net.rptools.data.TemplateData.TEMPLATE_DATA;
 
 public class TestingServer {
     private static final Logger log = LoggerFactory.getLogger(TestingServer.class);
 
-    private static final ObjectNode DATASETS = Pref.getObjectNode(Config.DATASETS);
+    private final ObjectNode DATASETS;
     private static final String RESOURCE_FOLDER = "/testSpace";
     private static final String PATH_PREFIX = "testSpace";
     private static final URLTemplateLoader TEMPLATE_LOADER = new ClassPathTemplateLoader();
-    private static final File FOLDER;
+    private final File FOLDER;
     private final Server server;
 
-    static {
+    public TestingServer() {
+        DATASETS = Pref.getObjectNode(Config.DATASETS);
         try {
             FOLDER = Path.of(Objects.requireNonNull(TestingServer.class.getResource(RESOURCE_FOLDER)).toURI()).toFile();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public TestingServer() {
         try {
-            TEMPLATE_DATA.removeAll();
-            TEMPLATE_DATA.setAll(SheetsObject.getJson());
-            TEMPLATE_DATA.set("datasetNames", Pref.getArrayNode(Config.DATASET_NAMES));
-            TEMPLATE_DATA.put("datasetName", Pref.getString(Config.DATASET_NAME));
-            TEMPLATE_DATA.put("statSheetLocation", Pref.getString(Config.LOCATION));
-            TEMPLATE_DATA.set("themes", OBJECT_MAPPER.readTree(OBJECT_MAPPER.writerFor(List.class).writeValueAsString(Pref.getList(Config.THEME_CSS))));
-            TEMPLATE_DATA.put("theme", Pref.getString(Config.THEME));
-            TEMPLATE_DATA.put("background", Pref.getString(Config.BACKGROUND));
-            TEMPLATE_DATA.put("viewAs", Pref.getString(Config.VIEW_AS));
-            addDataSet();
-
             TEMPLATE_LOADER.setPrefix(RESOURCE_FOLDER);
 
             Handlebars handlebars = new Handlebars(TEMPLATE_LOADER);
@@ -70,7 +57,6 @@ public class TestingServer {
 
             Servlet pageServlet = new TestServlet(template);
             ServletHolder pageServletHolder = new ServletHolder("TestServletHolder", pageServlet);
-
 
             WebAppContext root = new WebAppContext();
             root.setErrorHandler(Utils.errorHandlerSupplier.get());
@@ -104,16 +90,19 @@ public class TestingServer {
                 sseServlet.setServer(server);
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage(),e);
             throw new RuntimeException(e);
         }
     }
 
-    public void start() throws Exception {
+    public boolean start() throws Exception {
         if (server != null) {
             server.start();
             server.join();
+            return server.isRunning();
         }
+        return false;
     }
 
     public void stop() {
@@ -125,14 +114,15 @@ public class TestingServer {
         }
     }
     public void addDataSet() {
-        ObjectNode node = (ObjectNode) DATASETS.get(Pref.getString(Config.DATASET_NAME));
-        node.fieldNames().forEachRemaining(fieldName -> TEMPLATE_DATA.set(fieldName, node.get(fieldName)));
+
     }
 
     public static final Supplier<Runnable> testServerRunnable = () -> () -> {
         TestingServer testingServer = new TestingServer();
         try {
-            testingServer.start();
+            if(!testingServer.start()){
+                throw new RuntimeException("Not running");
+            }
         } catch (Exception e) {
             testingServer.stop();
             throw new RuntimeException(e);

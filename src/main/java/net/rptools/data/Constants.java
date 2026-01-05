@@ -6,7 +6,8 @@ import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.nio.file.Path;
 
 public class Constants {
     public static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
@@ -18,9 +19,7 @@ public class Constants {
             .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
             .enable(SerializationFeature.INDENT_OUTPUT)
             .build();
-
-    public static final ObjectNode TEMPLATE_DATA = OBJECT_MAPPER.createObjectNode();
-
+    public static final Path USER_DIR = Path.of(System.getProperty("user.dir")).toAbsolutePath();
     public enum NoteType {
         HTML("text/html","HTML"),
         MARKDOWN("text/markdown", "Markdown"),

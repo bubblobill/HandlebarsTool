@@ -1,7 +1,6 @@
 package net.rptools.data;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import net.rptools.data.config.Config;
@@ -11,12 +10,12 @@ import net.rptools.util.WatchFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
-import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -29,17 +28,15 @@ import static net.rptools.data.Constants.OBJECT_MAPPER;
 public class SheetsObject {
     private static final Logger log = LoggerFactory.getLogger(SheetsObject.class);
     private static final ObjectNode json = OBJECT_MAPPER.createObjectNode();
-    private static final JFileChooser fc = new JFileChooser();
     private static String sheet = Pref.getString(Config.SHEET);
     private static Path folder = Pref.getPath(Config.TEMPLATE_FOLDER);
     private static boolean loaded = false;
-    private static final List<Path> PATH_LIST = new ArrayList<>();
+    private static final List<Path> PATH_LIST = Collections.synchronizedList(new ArrayList<>());
+
     private static final AtomicBoolean WATCH_CHANGE = new AtomicBoolean(false);
 
     static {
-        fc.setDialogTitle("Select sheet templates directory");
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        fc.setMultiSelectionEnabled(false);
+        PATH_LIST.add(folder);
     }
 
     public static void setWatchChange(boolean value) {
@@ -66,7 +63,9 @@ public class SheetsObject {
             }
         }
         PATH_LIST.sort(Comparator.naturalOrder());
-        buildJson(PATH_LIST.getFirst());
+        if(PATH_LIST.isEmpty()) {
+            buildJson(PATH_LIST.getFirst());
+        }
         setWatchChange(true);
         log.info("SheetsObject rebuilt");
     });
@@ -74,7 +73,7 @@ public class SheetsObject {
     public static boolean setFolder(Path folder_) {
         File f = folder_.toFile();
         loaded = false;
-        if (f.exists() && f.isDirectory()) {
+        if (Files.exists(folder_) && Files.isDirectory(folder_)) {
             PATH_LIST.clear();
             folder = folder_;
             if (Pref.getBoolean(Config.LIB_FILE)){
@@ -94,7 +93,7 @@ public class SheetsObject {
             ArrayNode arrayNode = OBJECT_MAPPER.createArrayNode();
             json.set("sheets", arrayNode);
             for (Path path : PATH_LIST) {
-                ObjectNode sheet = JsonNodeFactory.instance.objectNode();
+                ObjectNode sheet = OBJECT_MAPPER.createObjectNode();
                 if (SheetsObject.sheet == null) {
                     SheetsObject.sheet = path.getFileName().toString();
                     Pref.set(Config.SHEET, SheetsObject.sheet);
@@ -122,12 +121,4 @@ public class SheetsObject {
         return json;
     }
 
-    public static void selectFolder(Component component) {
-        if (folder != null) {
-            fc.setCurrentDirectory(folder.toFile());
-        }
-        if (fc.showDialog(component, "Select Folder") == JFileChooser.APPROVE_OPTION) {
-            setFolder(fc.getSelectedFile().toPath());
-        }
-    }
 }
