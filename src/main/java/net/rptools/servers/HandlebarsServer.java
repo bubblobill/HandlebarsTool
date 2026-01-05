@@ -34,6 +34,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.rptools.data.TemplateData.TEMPLATE_DATA;
+import static net.rptools.data.config.Config.THEME;
 
 public class HandlebarsServer {
     private static final Logger log = LoggerFactory.getLogger(HandlebarsServer.class);
@@ -76,6 +77,7 @@ public class HandlebarsServer {
 
             root.setResourceBase(basePath.toString());
             root.addServlet(servletHolder, "/");
+            root.addServlet(servletHolder, "*.css");
             root.addServlet(servletHolder, "*" + TemplateLoader.DEFAULT_SUFFIX);
             root.setParentLoaderPriority(true);
 
@@ -122,7 +124,7 @@ public class HandlebarsServer {
 //        }
 //
 //    }
-    private static String theme = Pref.getString(Config.THEME);
+    private static String theme = Pref.getString(THEME);
     private static String themeCSS = Pref.getObjectNode(Config.THEME_CSS).get(theme).asText();
 
     public class HandlebarsServlet extends HttpServlet {
@@ -141,50 +143,64 @@ public class HandlebarsServer {
 
             Writer writer = null;
             Utils.commonResponseBits(response);
-            try {
-                Template template = handlebars.compileInline(getTemplateText.apply(requestURI(request)));
+            if(request.getRequestURI().toLowerCase().endsWith("mt-stat-sheet.css")){
                 String theme_ = TEMPLATE_DATA.get("theme").asText();
-                if(!theme_.equalsIgnoreCase(theme)) {
+                if (!theme_.equalsIgnoreCase(theme)) {
                     theme = theme_;
                     themeCSS = CSS_OBJECT.get(theme_).asText();
                 }
+                writer = response.getWriter();
+                writer.write(themeCSS);
+            } else if(request.getRequestURI().toLowerCase().endsWith(".hbs")) {
+                try {
+                    Template template = handlebars.compileInline(getTemplateText.apply(requestURI(request)));
 
-                Context context = Context
-                        .newBuilder(TEMPLATE_DATA)
-                        .push(JsonNodeValueResolver.INSTANCE)
-                        .build();
+                    Context context = Context
+                            .newBuilder(TEMPLATE_DATA)
+                            .push(JsonNodeValueResolver.INSTANCE)
+                            .build();
 
-                Document doc = Jsoup.parse(template.apply(context));
-                if (!themeCSS.isBlank()) {
-                    var cssNode = doc.createElement("style");
-                    cssNode.id("themeCss");
-                    cssNode.appendText(Pref
-                            .getObjectNode(Config.THEME_CSS)
-                            .get(Pref.getString(Config.THEME))
-                            .asText());
+                    Document doc = Jsoup.parse(template.apply(context));
+                    var cssNode = doc.createElement("link");
+                    cssNode.id("mtThemeCss");
+                    cssNode.attr("rel","stylesheet");
+                    cssNode.attr("href", "./css/mt-stat-sheet.css");
                     var head = doc.head();
                     head.insertChildren(0, cssNode);
+
+                    writer = response.getWriter();
+                    writer.write(doc.outerHtml());
+                } catch (HandlebarsException ex) {
+                    Utils.handlebarsError(ex, response);
+                } catch (JsonParseException ex) {
+                    Utils.whoops(ex);
+                    log.error("Unexpected error", ex);
+                    Utils.jsonError(ex, request, response);
+                } catch (FileNotFoundException ex) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                } catch (IOException | RuntimeException ex) {
+                    Utils.whoops(ex);
+                    log.error("Unexpected error", ex);
+                    throw ex;
+                } catch (Exception ex) {
+                    Utils.whoops(ex);
+                    log.error("Unexpected error", ex);
+                    throw new ServletException(ex);
+                } finally {
+                    IOUtils.closeQuietly(writer);
                 }
-                writer = response.getWriter();
-                writer.write(doc.outerHtml());
-            } catch (HandlebarsException ex) {
-                Utils.handlebarsError(ex, response);
-            } catch (JsonParseException ex) {
-                Utils.whoops(ex);
-                log.error("Unexpected error", ex);
-                Utils.jsonError(ex, request, response);
-            } catch (FileNotFoundException ex) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            } catch (IOException | RuntimeException ex) {
-                Utils.whoops(ex);
-                log.error("Unexpected error", ex);
-                throw ex;
-            } catch (Exception ex) {
-                Utils.whoops(ex);
-                log.error("Unexpected error", ex);
-                throw new ServletException(ex);
-            } finally {
-                IOUtils.closeQuietly(writer);
+            } else {
+                Path sourcePath = basePath.resolve(request.getRequestURI().substring(1));
+                if (Files.exists(sourcePath) && Files.isRegularFile(sourcePath)) {
+                    if (Files.isReadable(sourcePath) || sourcePath.toFile().setReadable(true)) {
+                        try {
+                            writer = response.getWriter();
+                            writer.write(Files.readString(sourcePath, StandardCharsets.ISO_8859_1));
+                        } catch (IOException e) {
+                            log.error(e.getLocalizedMessage(), e);
+                        }
+                    }
+                }
             }
         }
 

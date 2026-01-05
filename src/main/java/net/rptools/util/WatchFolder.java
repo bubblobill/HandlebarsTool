@@ -79,7 +79,7 @@ public class WatchFolder {
             WATCH_FOLDER = folder;
             initialise();
         } else {
-            stop();
+//            stop();
             start();
         }
     }

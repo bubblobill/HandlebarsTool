@@ -43,6 +43,7 @@ public class TestServlet extends HttpServlet {
             TEMPLATE_UPDATER.readValue(reader);
             TemplateData.filterProperties();
         } catch (IOException e) {
+            log.error(e.getLocalizedMessage(), e);
             throw new RuntimeException(e);
         }
     }

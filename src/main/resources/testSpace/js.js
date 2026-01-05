@@ -7,20 +7,6 @@ evtSource.onmessage = (event) => {
     reloadPage();
 };
 
-
-
-//// force a page to reload from server at browser launch
-//// https://gist.github.com/adrienv1520/7e4bacc44849b7daa5ce323bcc800272
-//if ('performance' in window) {
-//  const navigationLastEntry = performance.getEntriesByType('navigation').pop();
-//  if (navigationLastEntry
-//      && navigationLastEntry.type === 'back_forward'
-//      && navigationLastEntry.unloadEventStart === 0) {
-//    // Reload the page with a cache-busting query parameter
-//    reloadPage();
-//  }
-//}
-
 window.addEventListener("load", function () {
     const winBtn = document.getElementById("separate");
     const reloadBtn = document.getElementById("reload");
