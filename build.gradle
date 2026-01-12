@@ -29,17 +29,27 @@ java {
         languageVersion = JavaLanguageVersion.of(24)
     }
 }
-//
-//configurations {
-//    antTask
-//}
-
 dependencies {
 
 //    implementation("org.beryx.runtime:org.beryx.runtime.gradle.plugin:2.0.1")
 
-    implementation 'com.github.jknack:handlebars-proto:4.3.1'
-    implementation 'com.github.jknack:handlebars-helpers:4.3.1'
+//    implementation 'com.github.jknack:handlebars-proto:4.3.1'
+    implementation 'com.github.jknack:handlebars:4.5.0'
+    implementation 'com.github.jknack:handlebars-helpers:4.5.0'
+    implementation 'com.github.jknack:handlebars-jackson2:4.3.1'
+
+    implementation 'jakarta.servlet:jakarta.servlet-api:6.1.0'
+    implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.20.1'
+    implementation 'commons-io:commons-io:2.21.0'
+
+    implementation 'org.eclipse.jetty:jetty-webapp:11.0.26'
+    implementation 'org.eclipse.jetty:jetty-server:12.1.5'
+//    implementation 'org.eclipse.jetty:jetty-servlet:11.0.26'
+    implementation 'org.eclipse.jetty.ee10:jetty-ee10-servlet:12.1.5'
+    implementation 'org.eclipse.jetty:jetty-servlets:11.0.26'
 
     implementation 'org.jsoup:jsoup:1.21.2'
 
@@ -48,7 +58,8 @@ dependencies {
 
     implementation 'org.apache.logging.log4j:log4j-core:2.25.3'
     implementation 'org.apache.logging.log4j:log4j-api:2.25.3'
-    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.25.3'
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.25.3'
+    implementation 'org.slf4j:slf4j-api:2.0.17'
 }
 jar {
     manifest {

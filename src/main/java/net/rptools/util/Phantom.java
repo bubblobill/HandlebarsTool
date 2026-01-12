@@ -1,10 +1,11 @@
 package net.rptools.util;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import net.rptools.data.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -12,6 +13,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -21,15 +23,30 @@ import java.util.function.Predicate;
  */
 public class Phantom {
     private static final Logger log = LoggerFactory.getLogger(Phantom.class);
-    private static final List<Path> PATHS = new ArrayList<>();
-    private static final Predicate<File> FILE_PREDICATE = file ->
-            file != null && file.exists() && file.canRead() && !file.isDirectory()
-                    && file.getName().toLowerCase().endsWith(".hbs");
+    private static final Set<String> SUFFIXES = Constants.MIME_MAP.keySet();
+    private static final List<Path> HBS_PATHS = new ArrayList<>();
+    private static final List<Path> FILE_PATHS = new ArrayList<>();
+    private static final List<Path> DIR_PATHS = new ArrayList<>();
+    private static final Predicate<File> DIR_PREDICATE = file -> file != null && file.exists() && file.canRead() && file.isDirectory();
+    private static final Predicate<File> HBS_PREDICATE = file ->
+        file != null && file.exists() && file.canRead() && !file.isDirectory() && file.getName().toLowerCase().endsWith(".hbs");
+    private static final Predicate<File> FILE_PREDICATE = file -> {
+        if(file == null){
+            return false;
+        }
+        boolean result = file.exists() && file.canRead() && !file.isDirectory();
+        String name = file.getName();
+        int idx = name.lastIndexOf('.');
+        if(idx > 0 && idx < name.length() - 1){
+            result = result && SUFFIXES.contains(name.substring(idx + 1).toLowerCase());
+        }
+        return result;
+    };
     private static final AtomicBoolean success = new AtomicBoolean();
     private static final AtomicReference<Throwable> throwable = new AtomicReference<>(null);
 
     public Phantom(Path rootPath) {
-        PATHS.clear();
+        HBS_PATHS.clear();
         throwable.set(null);
         success.set(true);
         FileVisitor<Path> ghost = new Ghost();
@@ -58,14 +75,22 @@ public class Phantom {
                                             stackTraceElement.getClassName(),
                                             stackTraceElement.getMethodName()
                                     )).toList());
-            Utils.alert("Error Walking File-Tree: " + t.getClass().getSimpleName(), args.toArray(String[]::new));
+            Alerts.alert("Error Walking File-Tree: " + t.getClass().getSimpleName(), args.toArray(String[]::new));
         }
 
         @Override
         @Nonnull
         public FileVisitResult visitFile(@Nonnull Path path, @Nonnull BasicFileAttributes attrs) {
+            boolean test = false;
+            if(HBS_PREDICATE.test(path.toAbsolutePath().toFile())){
+                HBS_PATHS.add(path.toAbsolutePath());
+                test = true;
+            }
             if (FILE_PREDICATE.test(path.toAbsolutePath().toFile())) {
-                PATHS.add(path.toAbsolutePath());
+                FILE_PATHS.add(path.toAbsolutePath());
+                test = true;
+            }
+            if(test){
                 return FileVisitResult.CONTINUE;
             } else {
                 try {
@@ -79,6 +104,9 @@ public class Phantom {
 
         @Override @Nonnull
         public FileVisitResult preVisitDirectory(@Nonnull Path dir, @Nonnull BasicFileAttributes attrs) {
+            if(DIR_PREDICATE.test(dir.toFile())){
+                DIR_PATHS.add(dir);
+            }
             try {
                 return super.preVisitDirectory(dir, attrs);
             } catch (Throwable t){
@@ -95,9 +123,24 @@ public class Phantom {
         }
     }
 
-    public List<Path> getPaths() {
+    @SuppressWarnings("unused")
+    public List<Path> getFilePaths() {
         if (success.get()) {
-            return PATHS;
+            return FILE_PATHS;
+        } else {
+            return new ArrayList<>();
+        }
+    }
+    public List<Path> getHandlebarsPaths() {
+        if (success.get()) {
+            return HBS_PATHS;
+        } else {
+            return new ArrayList<>();
+        }
+    }
+    public List<Path> getFolderPaths() {
+        if (success.get()) {
+            return DIR_PATHS;
         } else {
             return new ArrayList<>();
         }

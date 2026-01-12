@@ -11,18 +11,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.nio.file.StandardWatchEventKinds.*;
 import static net.rptools.data.Constants.OBJECT_MAPPER;
 
 public class SheetsObject {
@@ -47,42 +44,55 @@ public class SheetsObject {
         return WATCH_CHANGE.get();
     }
 
-    private static final Executor DELAYED_EXECUTOR = CompletableFuture.delayedExecutor(80, TimeUnit.MILLISECONDS);
-    public static final PropertyChangeListener propertyChangeListener = _ -> DELAYED_EXECUTOR.execute(() -> {
-        while (!WatchFolder.getQueue().isEmpty()) {
-            Path p = WatchFolder.getQueue().poll();
-            if (p.toFile().exists()) {
-                if (p.toFile().isDirectory()) {
-                    PATH_LIST.addAll(new Phantom(p).getPaths());
-                } else if (p.getFileName().endsWith(".hbs") && !PATH_LIST.contains(p)) {
-                    PATH_LIST.add(p);
-                }
-            } else {
-                PATH_LIST.removeIf(path -> path.startsWith(p));
-                PATH_LIST.remove(p);
+    private static final Executor DELAYED_EXECUTOR = CompletableFuture.delayedExecutor(110, TimeUnit.MILLISECONDS);
+    public static final PropertyChangeListener propertyChangeListener = e -> DELAYED_EXECUTOR.execute(() -> {
+        log.info("Watch change PCL start");
+        boolean rebuild = false;
+        boolean notify = false;
+        Queue<Path> queue = WatchFolder.getQueue(e.getPropertyName());
+        if (queue == null) {
+            return;
+        }
+        while (!queue.isEmpty()) {
+            Path qPath = queue.poll();
+            if (qPath == null) {
+                continue;
             }
+            notify = true;
+            if (e.getPropertyName().equalsIgnoreCase(ENTRY_DELETE.name())) {
+                PATH_LIST.remove(qPath);
+                rebuild = true;
+            } else if (e.getPropertyName().equalsIgnoreCase(ENTRY_CREATE.name())) {
+                if (qPath.getFileName().endsWith(".hbs") && !PATH_LIST.contains(qPath)) {
+                    PATH_LIST.add(qPath);
+                    rebuild = true;
+                }
+            } // else ENTRY_MODIFY - unused
         }
-        PATH_LIST.sort(Comparator.naturalOrder());
-        if(PATH_LIST.isEmpty()) {
+        if (rebuild) {
+            PATH_LIST.remove(folder);
+            PATH_LIST.sort(Comparator.naturalOrder());
+            PATH_LIST.addFirst(folder);
             buildJson(PATH_LIST.getFirst());
+            log.info("SheetsObject rebuilt");
         }
-        setWatchChange(true);
-        log.info("SheetsObject rebuilt");
+
+        setWatchChange(notify || getWatchChange());
+        log.info("Watch change PCL start");
     });
 
     public static boolean setFolder(Path folder_) {
-        File f = folder_.toFile();
         loaded = false;
         if (Files.exists(folder_) && Files.isDirectory(folder_)) {
             PATH_LIST.clear();
             folder = folder_;
-            if (Pref.getBoolean(Config.LIB_FILE)){
+            if (Pref.getBoolean(Config.LIB_FILE)) {
                 LibraryJSON.setJsonFilePath(folder_);
             }
             Pref.set(Config.TEMPLATE_FOLDER, folder_.toString());
             json.removeAll();
             json.put("source", folder_.toString());
-            PATH_LIST.addAll(new Phantom(folder).getPaths());
+            PATH_LIST.addAll(new Phantom(folder).getHandlebarsPaths());
             buildJson(folder_);
         }
         return loaded;

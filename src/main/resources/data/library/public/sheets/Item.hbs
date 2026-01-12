@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+    <title>Sheet</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, height=device-height, user-scalable=0, initial-scale=1" />
+    <link rel="stylesheet" href="lib://net.rptools.maptool/css/mt-stat-sheet.css" />
+    <link rel="stylesheet" href="./css/generic.css" />
+    <link rel="stylesheet" href="./css/item.css" />
+    <style>
+    .portrait {
+        --aspect-ratio: calc( {{portrait-width}} / {{portrait-height}} );
+        --height: calc( var(--aspect-ratio) * {{portrait-height}} )px;
+        --width:  calc( var(--aspect-ratio) / {{portrait-width}} )px;
+        width:  var(--width);
+        height: var(--height);
+    }
+    </style>
+</head>
+<body>
+<div id="statSheet" class="statSheet {{statSheetLocation}} {{#if gm}}gm{{else}}player{{/if}} {{tokenType}}">
+    <div id="name" class="name">{{{name}}}</div>
+    <img id="image" class="image" src="
+        {{~#if portrait}}{{~portrait~}}
+        {{~else if handout}}{{~handout~}}
+        {{~else if image}}{{~image~}}{{~/if}}"
+    />
+    <div id="notes" class="notes">
+        {{~#eq notesType "text/plain"}}{{notes}}{{/eq~}}
+        {{~#eq notesType "text/md"}}{{#markdown}}{{notes}}{{/markdown}}{{/eq~}}
+        {{~#eq notesType "text/html"}}{{{notes}}}{{/eq~}}
+    </div>

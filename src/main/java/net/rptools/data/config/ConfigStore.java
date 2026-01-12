@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.rptools.data.Constants;
-import net.rptools.util.Utils;
+import net.rptools.util.Alerts;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ public class ConfigStore {
             defaultsNode.put(TEMPLATE_FOLDER, Constants.USER_DIR.toString());
             ArrayNode datasetNames = OBJECT_MAPPER.createArrayNode();
             defaultsNode.set(DATASET_NAMES, datasetNames);
-            defaultsNode.get(Config.DATASETS).fields().forEachRemaining(entry -> datasetNames.add(entry.getKey()));
+            defaultsNode.get(Config.DATASETS).properties().forEach(entry -> datasetNames.add(entry.getKey()));
             defaultsNode.set(DATASET_NAME, datasetNames.get(0));
         } catch (IOException e) {
             log.error(e.getLocalizedMessage(), e);
@@ -110,44 +110,9 @@ public class ConfigStore {
         if(ROOT.get(DATASET_NAME).asText().isBlank()){
             set(DATASET_NAME, getOrDefault(ROOT.get(DATASET_NAMES).get(0), ROOT.get(DATASET_DEFAULT).asText()));
         }
-        ROOT.fields().forEachRemaining(nodeEntry -> addKey(nodeEntry.getKey()));
+        ROOT.properties().forEach(nodeEntry -> addKey(nodeEntry.getKey()));
     }
 
-   /* private void setDefaults() {
-        DEFAULTS.set(Config.RESET, JsonNodeFactory.instance.booleanNode(false));
-        DEFAULTS.set(Config.BACKGROUND, JsonNodeFactory.instance.textNode("Textures/Grass.png"));
-        DEFAULTS.set(Config.DATASET_NAME, JsonNodeFactory.instance.textNode("Basic"));
-        DEFAULTS.set(Config.DATASET_DEFAULT, JsonNodeFactory.instance.textNode("Basic"));
-        DEFAULTS.set(Config.HANDLEBARS_PORT, JsonNodeFactory.instance.numberNode(6781));
-        DEFAULTS.set(Config.SERVER_PORT, JsonNodeFactory.instance.numberNode(7891));
-        DEFAULTS.set(Config.LOCATION, JsonNodeFactory.instance.textNode(Constants.StatSheetLocation.BOTTOM_LEFT.className()));
-        DEFAULTS.set(Config.SHEET, JsonNodeFactory.instance.textNode("Simple"));
-        DEFAULTS.set(Config.THEME, JsonNodeFactory.instance.textNode("Aah"));
-        DEFAULTS.set(Config.TEMPLATE_FOLDER, JsonNodeFactory.instance.textNode(System.getProperty("user.home")));
-        DEFAULTS.set(Config.LIB_FILE, JsonNodeFactory.instance.booleanNode(false));
-        DEFAULTS.set(Config.VIEW_AS, JsonNodeFactory.instance.textNode("player"));
-        DEFAULTS.set(Config.WATCH_FOLDER, JsonNodeFactory.instance.booleanNode(true));
-
-        try (InputStream is = ConfigStore.class.getResourceAsStream("/data/tokenPropertyTypes.json")) {
-            DEFAULTS.set(Config.DATASETS, OBJECT_MAPPER.readTree(is));
-            ArrayNode arrayNode = OBJECT_MAPPER.createArrayNode();
-            DEFAULTS.get(Config.DATASETS).fieldNames().forEachRemaining(arrayNode::add);
-            DEFAULTS.set(Config.DATASET_NAMES, arrayNode);
-        } catch (IOException e) {
-            Utils.whoops(e);
-            log.error(e.getLocalizedMessage(), e);
-            DEFAULTS.set(Config.DATASETS, JsonNodeFactory.instance.objectNode());
-        }
-
-        try (InputStream is = ConfigStore.class.getResourceAsStream("/data/themeCss.json")) {
-            DEFAULTS.set(Config.THEME_CSS, OBJECT_MAPPER.readTree(is));
-        } catch (IOException e) {
-            Utils.whoops(e);
-            log.error(e.getLocalizedMessage(), e);
-            DEFAULTS.set(Config.THEME_CSS, JsonNodeFactory.instance.objectNode());
-        }
-    }
-*/
     private void addKey(String key) {
         key = key.startsWith("/") ? key : "/" + key;
         JsonPointer pointer = JsonPointer.compile(key);
@@ -156,7 +121,7 @@ public class ConfigStore {
         }
         JsonNode node = ROOT.at(pointer);
         if (node instanceof ObjectNode objectNode) {
-            objectNode.fields().forEachRemaining(entry -> addKey(pointer.appendProperty(entry.getKey()).toString()));
+            objectNode.properties().forEach(entry -> addKey(pointer.appendProperty(entry.getKey()).toString()));
         } else if (node instanceof ArrayNode arrayNode) {
             for (int i = 0; i < arrayNode.size(); i++) {
                 addKey(pointer.appendIndex(i).toString());
@@ -180,7 +145,7 @@ public class ConfigStore {
                         OBJECT_MAPPER.writeValue(new FileOutputStream(file.toFile()), ROOT);
                     }
                 } catch (IOException e) {
-                    Utils.whoops(e);
+                    Alerts.whoops(e);
                     log.error(e.getLocalizedMessage(), e);
                 }
             }
@@ -199,7 +164,7 @@ public class ConfigStore {
                     save();
                 }
             } catch (IOException e) {
-                Utils.whoops(e);
+                Alerts.whoops(e);
                 log.info(e.getLocalizedMessage(), e);
                 return null;
             }
@@ -256,8 +221,7 @@ public class ConfigStore {
                     if (value != null && !value.isMissingNode()) {
                         return value;
                     }
-                } catch (NullPointerException e) {
-//                 continue;
+                } catch (NullPointerException _) {
                 }
             }
         }
@@ -294,7 +258,7 @@ public class ConfigStore {
                     case String v -> objectNode.set(key, JsonNodeFactory.instance.textNode(v));
                     default -> objectNode.set(key, JsonNodeFactory.instance.textNode(value.toString()));
                 }
-                log.info("Config set: {} -> {}", key, OBJECT_MAPPER.valueToTree(value));
+                log.debug("Config set: {} -> {}", key, OBJECT_MAPPER.valueToTree(value));
             }
         }
         save();

@@ -1,47 +1,51 @@
 <!DOCTYPE html>
 <html lang="en-AU">
 <head>
-<title>Base</title>
+<title>Sheet</title>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, height=device-height, user-scalable=0, initial-scale=1" />
 <link rel="stylesheet" href="lib://net.rptools.maptool/css/mt-stat-sheet.css" />
 <link rel="stylesheet" href="./css/generic.css" />
 <link rel="stylesheet" href="./css/sheet.css" />
+
 <style>
-:root {
-    --portrait-width: {{portraitWidth}};
-    --portrait-height: {{portraitHeight}};
+.portrait {
+    width: {{portraitWidth}}px;
+    height: {{portraitHeight}}px;
 }
 </style>
 </head>
 <body>
 <div id="statSheet" class="statSheet {{statSheetLocation}} {{#if gm}}gm{{else}}player{{/if}} {{tokenType}}">
-    <img id="portrait" class="portrait"
-       src="{{~#if portrait}}{{~portrait~}}
-            {{~else if handout}}{{~handout~}}
-            {{~else if image}}{{~image~}}{{~/if}}"
-       width="{{portraitWidth}}"
-       height="{{portraitHeight}}"
-     alt="D'oh!"/>
-
-    <div id="name" class="name">{{{name}}}</div>
-
-    {{#if properties~}}
-    <div id="stats" class="stats">
-    {{#each properties~}}
-        <div class="entry">
-           <div class="feature {{#if this.gmOnly}}gm-only{{/if}}">
-            {{~#if this.shortName}}
-                {{{this.shortName}}}
-            {{~else}}
-                {{{this.displayName}}}
-            {{~/if}}
-            </div>
-            <div class="value">{{{this.value}}}</div>
-        </div>
-    {{~/each}}
+    <div id="namePic">
+        {{#or portrait handout image}}
+        <img id="portrait" class="portrait"
+             src="{{~#if portrait}}{{~portrait~}}
+             {{~else if handout}}{{~handout~}}
+             {{~else if image}}{{~image~}}{{~/if}}"
+             alt="D'oh!"/>
+        {{/or}}
+        <div id="name" class="name">{{{name}}}</div>'
     </div>
-    {{~/if}}
+    {{#if properties}}
+    <div id="stats" class="stats">
+            {{#each prop}}
+                {{#neq this.value ""}}
+                <div class="entry">
+                    <div class="feature {{~#if this.gmOnly}}gm-only{{/if}}">
+                        {{~#if this.displayName}}{{this.displayName~}}
+                        {{~else if this.shortName~}}{{this.shortName~}}
+                        {{~else}}{{this.name~}}
+                        {{~/if~}}
+                    </div>
+                    <div class="value">{{{this.value}}}</div>
+                </div>
+                {{/neq}}
+            {{/each}}
+    {{else}}
+        <!-- no attributes -->
+    {{/if}}
+    </div>
 </div>
 </body>
 </html>

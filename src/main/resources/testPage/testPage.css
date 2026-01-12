@@ -1,0 +1,135 @@
+* {
+  box-size: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  background-image: url("Textures/Grass.png");
+  height: 99.8vh;
+  width: 99.8vw;
+  overflow:hidden;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.content {
+  display: inline grid;
+  font-size: 16pt;
+  column-gap: .6em;
+  grid-template-areas:
+      "s pad ."
+      "s op op"
+      ". op op"
+      "d op op";
+  width: min-content;
+  max-width: 600px;
+  height: min-content;
+  max-height: 480px;
+}
+.s { grid-area: s; }
+.c { grid-area: c; }
+.op { grid-area: op; }
+.d { grid-area: d }
+.hidden { display: none; }
+
+#data {
+    display: none;
+}
+#showData {
+    grid-area: d;
+    background: beige;
+    border: 3px solid ivory;
+    border-radius: 0.4em;
+    cursor: pointer;
+    padding:0.2em;
+    text-align: center;
+}
+
+
+table {
+    background: rgb(250,250,245);
+    border-radius: 0.5rem;
+}
+.op tr td { padding-bottom: 0.21em; }
+.op button { width: 40%; }
+td { white-space: nowrap; }
+select {
+  text-indent: 0.2em;
+}
+.ga {
+    background: ivory;
+    border: 3px solid silver;
+    border-radius: 0.4em;
+    min-width: 8em;
+    padding:0.2em;
+}
+.ga input {
+    margin: revert;
+    line-height: 1.1em;
+    height: 1.1em;
+    width:2em;
+}
+.ga label {
+    margin: revert;
+    height: 1.1em;
+    line-height: 1.1em;
+}
+
+#radio-tl, #radio-t , #radio-tr, #radio-l , #radio-r , #radio-bl, #radio-b , #radio-br { display: none; }
+#radio-tl + div { transform: rotate(235deg); }
+#radio-t  + div { transform: rotate(270deg); }
+#radio-tr + div { transform: rotate(305deg); }
+#radio-l  + div { transform: rotate(180deg); }
+#radio-bl + div { transform: rotate(135deg); }
+#radio-b  + div { transform: rotate(90deg); }
+#radio-br + div { transform: rotate(45deg); }
+
+#pad {
+    background: transparent;
+    grid-area: pad;
+    height: min-content;
+    width: min-content;
+}
+#pad label { cursor: pointer; }
+#sheet {
+    width: 100%;
+}
+.folder {
+    display: block;
+    max-width: 18em;
+    overflow: clip;
+    text-align: right;
+    text-overflow: ellipsis;
+}
+.radio-label {
+    background: ivory;
+    border: 3px solid silver;
+    border-radius: 0.4em;
+    display: block;
+    width: 3em;
+    font-size: 3em;
+}
+
+.op {
+    grid-area: op;
+    width: fit-content;
+ }
+
+#overlay {
+    position: absolute;
+    border: 3px solid dkGrey;
+    pointer-events: none;
+    background: transparent;
+    z-index: 2;
+    left: 0;
+    top: 0;
+    height: 99.8vh;
+    width:  99.8vw;
+}
+.openButton {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    height: 1em;
+    width: 1em;
+}

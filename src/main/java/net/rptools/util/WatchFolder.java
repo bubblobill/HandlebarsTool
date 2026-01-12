@@ -37,9 +37,11 @@ public class WatchFolder {
     private static final AtomicReference<State> STATE = new AtomicReference<>();
     private static Path WATCH_FOLDER;
 
-    public static final ConcurrentLinkedQueue<Path> queue = new ConcurrentLinkedQueue<>();
+    public static final ConcurrentLinkedQueue<Path> addQueue = new ConcurrentLinkedQueue<>();
+    public static final ConcurrentLinkedQueue<Path> modifyQueue = new ConcurrentLinkedQueue<>();
+    public static final ConcurrentLinkedQueue<Path> removeQueue = new ConcurrentLinkedQueue<>();
 
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(queue);
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(KEYS);
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         this.pcs.addPropertyChangeListener(listener);
@@ -49,15 +51,32 @@ public class WatchFolder {
         this.pcs.removePropertyChangeListener(listener);
     }
 
-    public static ConcurrentLinkedQueue<Path> getQueue() {
-        return queue;
+    public static ConcurrentLinkedQueue<Path> getQueue(String kind) {
+        if(kind.equalsIgnoreCase(ENTRY_CREATE.name())) {
+            return addQueue;
+        } else if(kind.equalsIgnoreCase(ENTRY_MODIFY.name())) {
+            return modifyQueue;
+        } if(kind.equalsIgnoreCase(ENTRY_DELETE.name())) {
+            return removeQueue;
+        }
+        return null;
     }
 
-    public void addPathToQueue(Path changedPath) {
-        if (!queue.contains(changedPath)) {
+
+    public void addPathToQueue(final WatchEvent.Kind<?> kind, Path changedPath) {
+        Queue<Path> queue = null;
+        if(kind == ENTRY_CREATE){
+            queue = addQueue;
+        } else if(kind == ENTRY_DELETE){
+            queue = removeQueue;
+        } else if(kind == ENTRY_MODIFY){
+            queue = modifyQueue;
+        }
+        if(queue != null && !queue.contains(changedPath)) {
             try {
                 queue.add(changedPath);
-                this.pcs.firePropertyChange("value", queue.size(), changedPath);
+                log.info("Watcher PCS: fire event");
+                this.pcs.firePropertyChange(kind.name(), queue.size(), changedPath);
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage(), e);
             }
@@ -124,7 +143,7 @@ public class WatchFolder {
                 Phantom phantom = new Phantom(WATCH_FOLDER);
                 Throwable throwable = phantom.getThrowable();
                 if (throwable == null) {
-                    PATHS.addAll(phantom.getPaths());
+                    PATHS.addAll(phantom.getFolderPaths());
                 } else {
                     throw new RuntimeException(throwable);
                 }
@@ -162,7 +181,7 @@ public class WatchFolder {
             try {
                 STATE.set(watchFuture.get());
             } catch (InterruptedException | ExecutionException e) {
-                Utils.whoops(e);
+                Alerts.whoops(e);
                 STATE.set(FAILED);
             }
         } else {
@@ -202,7 +221,7 @@ public class WatchFolder {
             Phantom phantom = new Phantom(start);
             Throwable throwable = phantom.getThrowable();
             if (throwable == null) {
-                PATHS.addAll(phantom.getPaths());
+                PATHS.addAll(phantom.getFolderPaths());
                 PATHS.removeIf(p -> PATHS.stream().filter(p::equals).count() > 1);
                 PATHS.sort(Comparator.naturalOrder());
             }
@@ -227,6 +246,7 @@ public class WatchFolder {
             WatchKey key;
             try {
                 key = watcher.take();
+                log.info("Watcher: tick");
             } catch (ClosedWatchServiceException e) {
                 return FINISHED;
             } catch (InterruptedException e) {
@@ -235,7 +255,7 @@ public class WatchFolder {
 
             Path dir = KEYS.get(key);
             if (dir == null) {
-                Utils.whoops(new IllegalArgumentException("Watch Key not recognized."));
+                Alerts.whoops(new IllegalArgumentException("Watch Key not recognized."));
                 log.error("Watch Key not recognized.");
                 KEYS.remove(key);
                 continue;
@@ -271,9 +291,11 @@ public class WatchFolder {
                                     .handle((_, t) -> t == null);
                         }
                     }
+                    addPathToQueue(kind, child);
+
                 } catch (Exception _) {
                 }
-                addPathToQueue(child);
+
                 // reset key and remove from set if directory no longer accessible
                 boolean valid = key.reset();
                 if (!valid) {

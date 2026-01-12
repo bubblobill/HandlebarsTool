@@ -2,8 +2,6 @@ package net.rptools.data.config;
 
 import net.rptools.data.Constants;
 import net.rptools.data.SheetsObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +11,6 @@ import static net.rptools.data.config.Config.ADD_ON_FOLDER;
 import static net.rptools.data.config.Config.TEMPLATE_FOLDER;
 
 public class Chooser {
-    private static final Logger log = LoggerFactory.getLogger(Chooser.class);
     private static final String APPROVE_BUTTON_TEXT = "Select Folder";
     public static final JFileChooser FC;
 

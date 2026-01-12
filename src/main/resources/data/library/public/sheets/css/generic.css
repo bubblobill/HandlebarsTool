@@ -3,4 +3,8 @@
 	margin: 0;
 	padding: 0;
 }
+#statSheet {
+	max-height: 83vh;
+	max-width: 72vw;
+}
 #statSheet.player .gm-only { display:none; }

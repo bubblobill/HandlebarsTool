@@ -9,11 +9,10 @@ import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
 import net.rptools.data.Constants;
 import net.rptools.data.SheetsObject;
+import net.rptools.servers.Servitude;
+import net.rptools.util.Alerts;
 import net.rptools.util.WatchFolder;
-import net.rptools.servers.HandlebarsServer;
-import net.rptools.servers.TestingServer;
 import net.rptools.util.Bones;
-import net.rptools.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +56,7 @@ public class Launcher extends JDialog {
     private JTextField port;
 
     private WatchFolder watchFolder;
-    private Future<?> hbTask;
+
     private Future<?> tsTask;
     final ExecutorService threadPool = Executors.newFixedThreadPool(2, Executors.defaultThreadFactory());
     private URI uri;
@@ -136,7 +135,6 @@ public class Launcher extends JDialog {
     }
 
     private static final MouseListener openFile = new MouseAdapter() {
-        Color background, foreground;
         @Override
         public void mouseClicked(MouseEvent e) {
             try {
@@ -150,7 +148,7 @@ public class Launcher extends JDialog {
                 }
                 Desktop.getDesktop().open(path.toFile());
             } catch (IOException ex) {
-                Utils.whoops(ex);
+                Alerts.whoops(ex);
             }
         }
     };
@@ -163,12 +161,12 @@ public class Launcher extends JDialog {
         try {
             Desktop.getDesktop().browse(uri);
         } catch (IOException ex) {
-           Utils.whoops(ex);
+            Alerts.whoops(ex);
         }
     }
 
     private void onReset() {
-        if (Utils.prompt(this, "This will reset everything and lose your custom data.\n You might want to consider editing the config file instead.\nContinue with reset?")) {
+        if (Alerts.prompt(this, "This will reset everything and lose your custom data.\n You might want to consider editing the config file instead.\nContinue with reset?")) {
             Pref.reset();
         }
     }
@@ -180,22 +178,22 @@ public class Launcher extends JDialog {
     }
 
     private void onSelectFolder() {
-        if(Chooser.selectTemplateFolder(this)) {
+        if (Chooser.selectTemplateFolder(this)) {
             setSelectedFolder();
         }
     }
 
     private void setSelectedFolder() {
-            try {
-                selectedFolder.setText(Pref.getString(Config.TEMPLATE_FOLDER));
-                serverStart.setEnabled(true);
-                if (watchFolder != null) {
-                    WatchFolder.stop();
-                }
-            } catch (SecurityException | IOError | InvalidPathException | UnsupportedOperationException e) {
-                Utils.whoops(e);
-                log.error(e.getLocalizedMessage(), e);
+        try {
+            selectedFolder.setText(Pref.getString(Config.TEMPLATE_FOLDER));
+            serverStart.setEnabled(true);
+            if (watchFolder != null) {
+                WatchFolder.stop();
             }
+        } catch (SecurityException | IOError | InvalidPathException | UnsupportedOperationException e) {
+            Alerts.whoops(e);
+            log.error(e.getLocalizedMessage(), e);
+        }
     }
 
     public void onEditData() {
@@ -232,7 +230,7 @@ public class Launcher extends JDialog {
     }
 
     private void setURI() {
-        uri = URI.create(String.format("http://localhost:%d/testSpace.hbs", Pref.getInt(Config.SERVER_PORT)));
+        uri = URI.create(String.format("http://localhost:%d/testPage.hbs", Pref.getInt(Config.SERVER_PORT)));
     }
 
     private void onServerStart() {
@@ -252,34 +250,30 @@ public class Launcher extends JDialog {
     }
 
     private boolean start() {
-        boolean success = TemplateData.initialiseTemplateData();
-        try {
-            if(Pref.getBoolean(Config.WATCH_FOLDER)) {
-                watchFolder = new WatchFolder(Pref.getPath(Config.TEMPLATE_FOLDER));
-                success = watchFolder.start();
-                log.info("Watchfolder started: {}", success);
-                watchFolder.addPropertyChangeListener(SheetsObject.propertyChangeListener);
-            } else {
-                success = true;
-            }
-            if (success) {
-                if (hbTask != null && hbTask.state().equals(Future.State.RUNNING)) {
-                    hbTask.cancel(true);
+        boolean success = false;
+        if(TemplateData.initialiseTemplateData()) {
+            try {
+                if (Pref.getBoolean(Config.WATCH_FOLDER)) {
+                    watchFolder = new WatchFolder(Pref.getPath(Config.TEMPLATE_FOLDER));
+                    success = watchFolder.start();
+                    log.info("WatchFolder started: {}", success);
+                    watchFolder.addPropertyChangeListener(SheetsObject.propertyChangeListener);
+                } else {
+                    success = true;
                 }
-                if (tsTask != null && tsTask.state().equals(Future.State.RUNNING)) {
-                    tsTask.cancel(true);
+                if (success) {
+                    if (tsTask != null && tsTask.state().equals(Future.State.RUNNING)) {
+                        tsTask.cancel(true);
+                    }
+                    tsTask = threadPool.submit(new Thread(Servitude.serveRunnable.get()));
+                    Future.State tsState = tsTask.state();
+                    success = tsState.equals(Future.State.RUNNING);// && hbState.equals(Future.State.RUNNING);
                 }
-
-                tsTask = threadPool.submit(new Thread(TestingServer.testServerRunnable.get()));
-                Future.State tsState = tsTask.state();
-                hbTask = threadPool.submit(new Thread(HandlebarsServer.handlebarsRunnable.get()));
-                Future.State hbState = hbTask.state();
-                success = tsState.equals(Future.State.RUNNING) && hbState.equals(Future.State.RUNNING);
+            } catch (Exception e) {
+                Alerts.whoops(e);
+                log.error(e.getLocalizedMessage(), e);
+                success = false;
             }
-        } catch (Exception e) {
-            Utils.whoops(e);
-            log.error(e.getLocalizedMessage(), e);
-            success = false;
         }
         log.info("Server started: {}", success);
         return success;
@@ -290,9 +284,6 @@ public class Launcher extends JDialog {
         if (watchFolder != null) {
             watchFolder.removePropertyChangeListener(SheetsObject.propertyChangeListener);
             WatchFolder.stop();
-        }
-        if (hbTask != null && !hbTask.isDone()) {
-            hbTask.cancel(true);
         }
         if (tsTask != null && !tsTask.isDone()) {
             tsTask.cancel(true);

@@ -7,7 +7,6 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -25,7 +24,6 @@ import static net.rptools.data.config.Config.ADD_ON_FOLDER;
 public class Bones {
     private static final Logger log = LoggerFactory.getLogger(Bones.class);
     private static File tempFile = null;
-    private static Path sheetsFolder;
     private static final List<String> FILE_LIST = Arrays.stream(new String[]{
             "/data/library/public/sheets/attributions.txt",
             "/data/library/public/sheets/copyright.txt",
@@ -80,16 +78,16 @@ public class Bones {
             tempFile = Files.createTempFile("copyright", ".txt").toAbsolutePath().toFile();
             IOUtils.write(content, new FileWriter(tempFile));
         } catch (IOException e) {
-            Utils.whoops(e);
+            Alerts.whoops(e);
             log.info(e.getLocalizedMessage(), e);
         }
     }
 
     public static boolean createBones() {
-        if (Utils.prompt(null, structure)) {
+        if (Alerts.prompt(null, structure)) {
             if(Chooser.selectAddonRootFolder(null)) {
                 Path rootFolder = Pref.getPath(ADD_ON_FOLDER);
-                if (Utils.prompt(null, String.format("Create folder structure in:\n %s", rootFolder.toAbsolutePath()))) {
+                if (Alerts.prompt(null, String.format("Create folder structure in:\n %s", rootFolder.toAbsolutePath()))) {
                     for (String filePath : FILE_LIST) {
                         try {
                             Path file = Paths.get(rootFolder.toAbsolutePath().toString(), filePath.substring(5));
@@ -109,12 +107,12 @@ public class Bones {
                             byte[] fileData = Files.readAllBytes(Path.of(uri));
                             Files.write(file, fileData);
                         } catch (URISyntaxException | SecurityException | IOException e) {
-                            Utils.whoops(e);
+                            Alerts.whoops(e);
                             log.info(e.getLocalizedMessage(), e);
                             return false;
                         }
                     }
-                    sheetsFolder = rootFolder.toAbsolutePath().resolve("library", "public", "sheets");
+                    Path sheetsFolder = rootFolder.toAbsolutePath().resolve("library", "public", "sheets");
                     Pref.set(ADD_ON_FOLDER, rootFolder);
                     Pref.set(Config.TEMPLATE_FOLDER, sheetsFolder);
                     return true;

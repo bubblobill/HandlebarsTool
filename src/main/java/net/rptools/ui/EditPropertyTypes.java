@@ -10,7 +10,6 @@ import net.rptools.Main;
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
 import net.rptools.data.Constants;
-import net.rptools.data.TokenProperty;
 import net.rptools.util.ImportCampaign;
 
 
@@ -68,10 +67,18 @@ public class EditPropertyTypes extends JDialog {
     private DefaultTableModel tableModel;
 
     private static String datasetName = Pref.getString("Basic", Pref.getString(Config.DATASET_DEFAULT), Config.DATASET_NAME);
-    //    private static final ObjectNode DATASETS = Pref.getObjectNode(Pref.DATASETS);
     private static final List<String> DATA_SET_NAMES = Pref.getList(Config.DATASETS);
     private static final ObjectNode DEFAULT_DATA_OBJECT = Pref.getObjectNode(Config.DATASETS + "/" + datasetName, Config.DATASETS + "/Basic");
+    private static final JFileChooser IMAGE_CHOOSER = new JFileChooser(Pref.getPath(Config.TEMPLATE_FOLDER).toFile());
     private ObjectNode tokenData;
+    record TokenProperty(boolean gmOnly, boolean ownerOnly, String name, String displayName, String shortName,
+
+                         String value) {}
+
+    static {
+        IMAGE_CHOOSER.setMultiSelectionEnabled(false);
+        IMAGE_CHOOSER.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    }
 
     public EditPropertyTypes() {
         $$$setupUI$$$();
@@ -154,13 +161,6 @@ public class EditPropertyTypes extends JDialog {
             Main.getLauncher().onEditData();
         });
         onOK();
-    }
-
-    private static final JFileChooser IMAGE_CHOOSER = new JFileChooser(Pref.getPath(Config.TEMPLATE_FOLDER).toFile());
-
-    static {
-        IMAGE_CHOOSER.setMultiSelectionEnabled(false);
-        IMAGE_CHOOSER.setFileSelectionMode(JFileChooser.FILES_ONLY);
     }
 
     private void onBrowse(ActionEvent e) {
@@ -282,7 +282,6 @@ public class EditPropertyTypes extends JDialog {
             Pref.set(Config.DATASET_DEFAULT, dataSetCombo.getSelectedItem());
         }
     }
-
 
     private void createUIComponents() {
         notesType = new JComboBox<>(new DefaultComboBoxModel<>(Constants.NoteType.values()));
@@ -512,7 +511,7 @@ public class EditPropertyTypes extends JDialog {
         return contentPane;
     }
 
-    public void addPropertyRow(TokenProperty property) {
+    private void addPropertyRow(TokenProperty property) {
         tableModel.insertRow(tableModel.getRowCount(), new Object[]{property.gmOnly(), property.ownerOnly(), property.name(), property.displayName(), property.shortName(), property.value()});
     }
 

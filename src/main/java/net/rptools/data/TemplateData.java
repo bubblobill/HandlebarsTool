@@ -16,7 +16,7 @@ import static net.rptools.data.config.Config.*;
 
 public class TemplateData {
     private static final Logger log = LoggerFactory.getLogger(TemplateData.class);
-    public static final ObjectNode TEMPLATE_DATA = Constants.OBJECT_MAPPER.createObjectNode();
+    public  static final ObjectNode TEMPLATE_DATA = Constants.OBJECT_MAPPER.createObjectNode();
     private static final ObjectNode DATA_SETS = OBJECT_MAPPER.createObjectNode();
     private static String datasetName = "";
     private static String viewAs = "";
@@ -44,6 +44,7 @@ public class TemplateData {
                 TEMPLATE_DATA.set(key, Pref.get(key));
             }
             TEMPLATE_DATA.setAll((ObjectNode) OBJECT_MAPPER.valueToTree(DATA_SETS.get(Pref.getString(DATASET_NAME))));
+            TEMPLATE_DATA.set("themes", OBJECT_MAPPER.valueToTree(Pref.getList(THEME_CSS)));
             return true;
         } catch (Exception e) {
             log.error(e.getLocalizedMessage(), e);
@@ -52,7 +53,6 @@ public class TemplateData {
     }
 
     public static void filterProperties() {
-        final boolean isNpc = TEMPLATE_DATA.get("tokenType").asText().equalsIgnoreCase("npc");
         final String datasetName_ = TEMPLATE_DATA.get(DATASET_NAME).asText();
         final String viewAs_ = TEMPLATE_DATA.get(VIEW_AS).asText();
         if (datasetName.equalsIgnoreCase(datasetName_) && viewAs.equalsIgnoreCase(viewAs_)) {

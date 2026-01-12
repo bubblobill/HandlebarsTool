@@ -7,15 +7,16 @@ import com.github.jknack.handlebars.context.FieldValueResolver;
 import com.github.jknack.handlebars.context.JavaBeanValueResolver;
 import com.github.jknack.handlebars.context.MapValueResolver;
 import com.github.jknack.handlebars.helper.*;
-import com.github.jknack.handlebars.server.HbsServer;
-import net.rptools.servers.MapToolHelpers;
+import com.github.jknack.handlebars.helper.ext.AssignHelper;
+import com.github.jknack.handlebars.helper.ext.IncludeHelper;
+import com.github.jknack.handlebars.helper.ext.NumberHelper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.ErrorHandler;
+import org.jspecify.annotations.NonNull;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.swing.*;
-import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -24,15 +25,11 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class Utils {
-    private static final String CHARSET_ENCODING = StandardCharsets.ISO_8859_1.name();
-    private static final String CONTENT_TYPE = "text/html";
-
     public static void registerHandlebarsHelpers(Handlebars handlebars) {
         // ---- HELPERS ----
-        handlebars.registerHelper(HelperRegistry.HELPER_MISSING, (context, options) -> new Handlebars.SafeString(options.fn.text()));
+        handlebars.registerHelper(HelperRegistry.HELPER_MISSING, (_, options) -> new Handlebars.SafeString(options.fn.text()));
         handlebars.registerHelper("json", Jackson2Helper.INSTANCE);
         StringHelpers.register(handlebars);
-        HumanizeHelper.register(handlebars);
         Arrays.stream(ConditionalHelpers.values()).forEach(h -> handlebars.registerHelper(h.name(), h));
         NumberHelper.register(handlebars);
         handlebars.registerHelper(AssignHelper.NAME, AssignHelper.INSTANCE);
@@ -44,18 +41,13 @@ public class Utils {
         response.addHeader("Expires", "Sat, 26 Jul 1997 05:00:00 GMT");
         response.addHeader("Cache-control", "no-cache");
         response.addHeader("Cache-control", "no-store");
-        response.addHeader("Pragma", "no-cache");
-        response.addHeader("Clear-Site-Data", "*");
-        response.addHeader("Sec-GPC", "1");
-        response.setCharacterEncoding(CHARSET_ENCODING);
-        response.setContentType(CONTENT_TYPE);
+        response.setHeader("X-Accel-Buffering", "no");
     }
 
 
     public static final Supplier<ErrorHandler> errorHandlerSupplier = () -> new ErrorHandler() {
         @Override
-        protected void writeErrorPageHead(final HttpServletRequest request, final Writer writer,
-                                          final int code, final String message) throws IOException {
+        protected void writeErrorHtmlHead(Request request, Writer writer, int code, String message) throws IOException {
             writer.write("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\"/>\n");
             writer.write("<title>{{");
             writer.write(Integer.toString(code));
@@ -65,9 +57,7 @@ public class Utils {
         }
 
         @Override
-        protected void writeErrorPageMessage(final HttpServletRequest request, final Writer writer,
-                                             final int code,
-                                             final String message, final String uri) throws IOException {
+        protected void writeErrorHtmlMessage(Request request, Writer writer, int code, String message, Throwable cause, String uri) throws IOException {
             writer.write("<div align=\"center\">");
             writer.write("<p><span style=\"font-size: 48px;\">{{</span><span style=\"font-size: 36px; color:#999;\">");
             writer.write(Integer.toString(code));
@@ -79,14 +69,6 @@ public class Utils {
             writer.write("</pre></p>");
             writer.write("</div>");
             writer.write("<hr />");
-        }
-
-        @Override
-        protected void writeErrorPageBody(final HttpServletRequest request, final Writer writer,
-                                          final int code,
-                                          final String message, final boolean showStacks) throws IOException {
-            String uri = request.getRequestURI();
-            writeErrorPageMessage(request, writer, code, message, uri);
         }
     };
 
@@ -106,7 +88,6 @@ public class Utils {
         template.apply(Context.newBuilder(error)
                 .resolver(MapValueResolver.INSTANCE, FieldValueResolver.INSTANCE, JavaBeanValueResolver.INSTANCE)
                 .combine("lang", "Xml")
-                .combine("version", HbsServer.version)
                 .combine("firstLine", firstLine).build(), writer);
         IOUtils.closeQuietly(writer);
     }
@@ -155,6 +136,14 @@ public class Utils {
         error.put("reason", reason);
         error.put("type", "JSON error");
         String json = read(request, filename);
+        var evidence = getStringBuilder(location, json);
+        error.put("evidence", evidence);
+        root.put("error", error);
+        int firstLine = Math.max(1, ex.getLocation().getLineNr() - 1);
+        fancyError(root, firstLine, response);
+    }
+
+    private static @NonNull StringBuilder getStringBuilder(JsonLocation location, String json) {
         StringBuilder evidence = new StringBuilder();
         int i = (int) location.getCharOffset();
         int nl = 0;
@@ -176,10 +165,7 @@ public class Utils {
             evidence.append(ch);
             i++;
         }
-        error.put("evidence", evidence);
-        root.put("error", error);
-        int firstLine = Math.max(1, ex.getLocation().getLineNr() - 1);
-        fancyError(root, firstLine, response);
+        return evidence;
     }
 
     /**
@@ -202,56 +188,5 @@ public class Utils {
         }
     }
 
-    public static boolean prompt(Component parent, String message) {
-        return JOptionPane.showConfirmDialog(parent, message, null, JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION;
-    }
-
-    private static final JOptionPane optionPane = new JOptionPane(null, JOptionPane.ERROR_MESSAGE, JOptionPane.DEFAULT_OPTION);
-    private static JDialog dialogue = null;
-    private static final JPanel messagePanel = new JPanel();
-    static {
-        optionPane.setOptions(new Object[]{"Okay"});
-        optionPane.setMessage(messagePanel);
-        BoxLayout box = new BoxLayout(messagePanel, BoxLayout.PAGE_AXIS);
-        messagePanel.setLayout(box);
-        optionPane.setVisible(false);
-    }
-    public static void alert(String notice, String... messages){
-        if(optionPane.isVisible()){
-            return;
-        }
-        messagePanel.removeAll();
-        messagePanel.add(new JLabel(String.format("<html><h2 color=\"blue\">%s</h2></html>", notice)));
-        StringBuilder builder = new StringBuilder("<html>");
-        for (String message : messages) {
-            builder.append("<p>").append(message).append("</p>");
-        }
-        builder.append("</html>");
-        messagePanel.add(new JLabel(builder.toString()));
-        new Thread(()->{
-            JOptionPane.showMessageDialog(null, messagePanel);
-            optionPane.setVisible(false);
-        }).start();
-    }
-    public static void whoops(Throwable e) {
-        if (dialogue != null || optionPane.isVisible()) {
-            return;
-        }
-        messagePanel.removeAll();
-        messagePanel.add(new JLabel(e.getLocalizedMessage()));
-        StackTraceElement[] elements = e.getStackTrace();
-        for (int i = 0; i < Math.min(12, elements.length); i++) {
-            messagePanel.add(new JLabel(String.format("%s", elements[i].toString())));
-        }
-        optionPane.setVisible(true);
-        dialogue = optionPane.createDialog("Error");
-        dialogue.setModal(true);
-        dialogue.pack();
-        new Thread(()->{
-            dialogue.setVisible(true);
-            dialogue = null;
-            optionPane.setVisible(false);
-        }).start();
-    }
 }
 

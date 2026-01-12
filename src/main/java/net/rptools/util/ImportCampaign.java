@@ -23,6 +23,7 @@ import java.nio.file.Path;
 
 import static net.rptools.data.Constants.*;
 
+@SuppressWarnings("SpellCheckingInspection")
 public class ImportCampaign {
 private static final Logger log = LoggerFactory.getLogger(ImportCampaign.class);
     private static final JFileChooser fc = new JFileChooser(Pref.getPath(Config.TEMPLATE_FOLDER).toFile());

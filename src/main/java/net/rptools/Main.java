@@ -4,10 +4,8 @@ import net.rptools.ui.Launcher;
 
 public class Main {
     private static Launcher launcher;
-    public static void main(String[] args) {
-        System.setProperty("org.eclipse.jetty.util.log.class", "org.eclipse.jetty.util.log.StdErrLog");
-        System.setProperty("org.eclipse.jetty.LEVEL", "WARN");
 
+    public static void main(String[] args) {
         launcher = new Launcher();
         launcher.setVisible(true);
         System.exit(0);

@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class Config {
     public static final String RESET = "reset";
     public static final String ADD_ON_FOLDER = "addonFolder";

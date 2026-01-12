@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
-import net.rptools.util.Utils;
+import net.rptools.util.Alerts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,13 +31,13 @@ public class LibraryJSON {
         if (!Pref.getBoolean(Config.LIB_FILE)) {
             return;
         }
-        if (Utils.prompt(null, "Create associated Add-On JSON file in root folder?")) {
+        if (Alerts.prompt(null, "Create associated Add-On JSON file in root folder?")) {
             try {
                 Files.createFile(jsonFilePath);
                 libObject.set(PROPERTY_NAME, libArray);
                 writeLibFile();
             } catch (Exception e) {
-                Utils.whoops(e);
+                Alerts.whoops(e);
                 log.error(e.getLocalizedMessage(), e);
                 Pref.set(Config.LIB_FILE, false);
             }
@@ -54,7 +54,7 @@ public class LibraryJSON {
             OBJECT_MAPPER.writeValue(new FileOutputStream(jsonFilePath.toFile()), libObject);
             Pref.set(Config.LIB_FILE, jsonFilePath);
         } catch (Exception e) {
-            Utils.whoops(e);
+            Alerts.whoops(e);
             log.error(e.getLocalizedMessage(), e);
             Pref.set(Config.LIB_FILE, false);
         }
@@ -79,13 +79,13 @@ public class LibraryJSON {
                             }
                         }
                     } catch (Exception e){
-                        Utils.whoops(e);
+                        Alerts.whoops(e);
                     }
                 } else {
                     createLibFile();
                 }
             } catch (Exception e){
-                Utils.whoops(e);
+                Alerts.whoops(e);
                 log.error(e.getLocalizedMessage(), e);
             }
         }
@@ -119,7 +119,7 @@ public class LibraryJSON {
         arrayNode.forEach(jsonNode -> {
             if(jsonNode instanceof ObjectNode objectNode){
                 List<String> values = new ArrayList<>();
-                objectNode.fields().forEachRemaining(nodeEntry -> values.add(nodeEntry.getValue().asText()));
+                objectNode.properties().forEach(nodeEntry -> values.add(nodeEntry.getValue().asText()));
                 values.forEach(value -> LOOKUP.putIfAbsent(value, objectNode));
             }
 
