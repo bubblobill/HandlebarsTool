@@ -75,7 +75,7 @@ public class WatchFolder {
         if(queue != null && !queue.contains(changedPath)) {
             try {
                 queue.add(changedPath);
-                log.info("Watcher PCS: fire event");
+                log.debug("Watcher PCS: fire event");
                 this.pcs.firePropertyChange(kind.name(), queue.size(), changedPath);
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage(), e);
@@ -117,7 +117,7 @@ public class WatchFolder {
             log.error("Error: Invalid folder(no read access)");
             return FAILED;
         }
-        log.info("Watch folder is valid");
+        log.debug("Watch folder is valid");
         return STARTING;
     };
     private static final Function<State, State> CREATE_SERVICE = state -> {
@@ -198,10 +198,10 @@ public class WatchFolder {
         if (trace) {
             Path prev = KEYS.get(key);
             if (prev == null) {
-                log.info("register: {}", dir);
+                log.debug("register: {}", dir);
             } else {
                 if (!dir.equals(prev)) {
-                    log.info("update: {} -> {}", prev, dir);
+                    log.debug("update: {} -> {}", prev, dir);
                 }
             }
         }
@@ -246,7 +246,6 @@ public class WatchFolder {
             WatchKey key;
             try {
                 key = watcher.take();
-                log.info("Watcher: tick");
             } catch (ClosedWatchServiceException e) {
                 return FINISHED;
             } catch (InterruptedException e) {

@@ -46,7 +46,7 @@ public class SheetsObject {
 
     private static final Executor DELAYED_EXECUTOR = CompletableFuture.delayedExecutor(110, TimeUnit.MILLISECONDS);
     public static final PropertyChangeListener propertyChangeListener = e -> DELAYED_EXECUTOR.execute(() -> {
-        log.info("Watch change PCL start");
+        log.debug("Watch change PCL start");
         boolean rebuild = false;
         boolean notify = false;
         Queue<Path> queue = WatchFolder.getQueue(e.getPropertyName());
@@ -74,11 +74,11 @@ public class SheetsObject {
             PATH_LIST.sort(Comparator.naturalOrder());
             PATH_LIST.addFirst(folder);
             buildJson(PATH_LIST.getFirst());
-            log.info("SheetsObject rebuilt");
+            log.debug("SheetsObject rebuilt");
         }
 
         setWatchChange(notify || getWatchChange());
-        log.info("Watch change PCL start");
+        log.debug("Watch change PCL end");
     });
 
     public static boolean setFolder(Path folder_) {

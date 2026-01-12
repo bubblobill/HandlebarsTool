@@ -79,7 +79,7 @@ public class Bones {
             IOUtils.write(content, new FileWriter(tempFile));
         } catch (IOException e) {
             Alerts.whoops(e);
-            log.info(e.getLocalizedMessage(), e);
+            log.error(e.getLocalizedMessage(), e);
         }
     }
 
@@ -108,7 +108,7 @@ public class Bones {
                             Files.write(file, fileData);
                         } catch (URISyntaxException | SecurityException | IOException e) {
                             Alerts.whoops(e);
-                            log.info(e.getLocalizedMessage(), e);
+                            log.error(e.getLocalizedMessage(), e);
                             return false;
                         }
                     }

@@ -81,7 +81,7 @@ public class OneServlet extends HttpServlet {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
-        log.info("POST Request - > {}", request.getRequestURI());
+        log.debug("POST Request - > {}", request.getRequestURI());
         if (request.getRequestURI().startsWith("/api")) {
             try (BufferedReader reader = request.getReader()) { // try-with-resources auto-closes the reader
                 String string = reader.lines().collect(Collectors.joining());
@@ -104,7 +104,7 @@ public class OneServlet extends HttpServlet {
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
-        log.info("OneServlet GET request -> {}", request.getRequestURI());
+        log.debug("OneServlet GET request -> {}", request.getRequestURI());
         String requestURI = request.getRequestURI().strip();
         if (requestURI.toLowerCase().endsWith(".hbs") || requestURI.equalsIgnoreCase("/sheet/default")) {
             handlebarsGet(request, response);
@@ -135,7 +135,7 @@ public class OneServlet extends HttpServlet {
     }
 
     protected void handlebarsGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
-        log.info("Handlebars GET request -> {}", request.getRequestURI());
+        log.debug("Handlebars GET request -> {}", request.getRequestURI());
         Writer writer = null;
         Utils.commonResponseBits(response);
 
@@ -232,7 +232,7 @@ public class OneServlet extends HttpServlet {
         if (server != null && server.isRunning() && SheetsObject.getWatchChange()) {
                 writer.write("data: true\n\n");
                 writer.flush();
-                log.info("SSEServlet -> Update notification sent");
+                log.debug("SSEServlet -> Update notification sent");
                 SheetsObject.setWatchChange(false);
             }
             try {
@@ -273,7 +273,6 @@ public class OneServlet extends HttpServlet {
         }
         if (resource.isReadable() && !resource.isDirectory()) {
             String mimeType = getServletContext().getMimeType(resource.getPath().toString());
-            log.info("MimeType: {}", mimeType);
             response.setContentType(mimeType);
 
             try (InputStream is = resource.newInputStream()) {

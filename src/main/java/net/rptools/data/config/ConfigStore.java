@@ -160,12 +160,12 @@ public class ConfigStore {
                 }
                 if (!Files.exists(configFile)) {
                     configFile = Files.createFile(FILE_PATH);
-                    log.info("Pref file created.");
+                    log.debug("Pref file created.");
                     save();
                 }
             } catch (IOException e) {
                 Alerts.whoops(e);
-                log.info(e.getLocalizedMessage(), e);
+                log.error(e.getLocalizedMessage(), e);
                 return null;
             }
         }

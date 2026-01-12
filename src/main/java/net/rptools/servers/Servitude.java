@@ -34,7 +34,7 @@ public class Servitude {
             CLASS_PATH_RESOURCE = new PathResourceFactory().newClassLoaderResource(RESOURCE_FOLDER);
         } catch (IllegalArgumentException e) {
             state.set(Constants.State.FAILED);
-            log.info(e.getLocalizedMessage(), e);
+            log.error(e.getLocalizedMessage(), e);
             throw new RuntimeException(e);
         }
         if (state.get().equals(Constants.State.FAILED)) {
@@ -99,7 +99,7 @@ public class Servitude {
             while (state.get().equals(Constants.State.STARTING) && count != 0) {
                 count--;
                 try {
-                    log.info(state.get().name());
+                    log.debug(state.get().name());
                     Thread.sleep(50);
                 } catch (InterruptedException e) {
                     log.error(e.getLocalizedMessage(), e);
@@ -123,7 +123,7 @@ public class Servitude {
             getServer().start();
             getServer().join();
         } catch (Exception e) {
-            log.info(e.getLocalizedMessage(), e);
+            log.error(e.getLocalizedMessage(), e);
         }
         return server.isRunning();
     }
