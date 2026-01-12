@@ -23,7 +23,6 @@ import java.nio.file.Path;
 
 import static net.rptools.data.Constants.*;
 
-@SuppressWarnings("SpellCheckingInspection")
 public class ImportCampaign {
 private static final Logger log = LoggerFactory.getLogger(ImportCampaign.class);
     private static final JFileChooser fc = new JFileChooser(Pref.getPath(Config.TEMPLATE_FOLDER).toFile());
@@ -75,7 +74,6 @@ private static final Logger log = LoggerFactory.getLogger(ImportCampaign.class);
 
     // Method to unzip files
     public static ObjectNode unzip(Path path) {
-        log.info(path.toString());
         ObjectNode on = OBJECT_MAPPER.createObjectNode();
         try (ZipFile zipFile = new ZipFile(path.toFile())) {
             ZipEntry entry;

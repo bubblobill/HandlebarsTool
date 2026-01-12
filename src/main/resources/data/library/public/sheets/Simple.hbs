@@ -35,7 +35,7 @@
 <ul class="propertyList">
 {{#each properties}}
     {{#neq this.value ""}}
-    <li class={{#if this.gmOnly}}"gmProperty"{{else}}"playerProperty"{{/if}}">
+    <li class="{{#if this.gmOnly}}gmProperty{{else}}playerProperty{{/if}}">
             {{~#if this.displayName~}}
                 {{~this.displayName~}}
             {{else}}

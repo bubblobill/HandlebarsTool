@@ -17,7 +17,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings("SpellCheckingInspection")
 public class Constants {
     public static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
             .enable(JsonParser.Feature.ALLOW_COMMENTS)
