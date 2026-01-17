@@ -7,9 +7,11 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import net.rptools.Main;
+import net.rptools.data.TemplateData;
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
 import net.rptools.data.Constants;
+import net.rptools.servers.Servitude;
 import net.rptools.util.ImportCampaign;
 
 
@@ -26,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -71,9 +74,11 @@ public class EditPropertyTypes extends JDialog {
     private static final ObjectNode DEFAULT_DATA_OBJECT = Pref.getObjectNode(Config.DATASETS + "/" + datasetName, Config.DATASETS + "/Basic");
     private static final JFileChooser IMAGE_CHOOSER = new JFileChooser(Pref.getPath(Config.TEMPLATE_FOLDER).toFile());
     private ObjectNode tokenData;
+
     record TokenProperty(boolean gmOnly, boolean ownerOnly, String name, String displayName, String shortName,
 
-                         String value) {}
+                         String value) {
+    }
 
     static {
         IMAGE_CHOOSER.setMultiSelectionEnabled(false);
@@ -270,6 +275,9 @@ public class EditPropertyTypes extends JDialog {
 
     private void onOK() {
         saveTokenData();
+        if(Servitude.getInstance() != null){
+            TemplateData.initialiseTemplateData();
+        }
         dispose();
     }
 
@@ -547,7 +555,8 @@ public class EditPropertyTypes extends JDialog {
                         propertyName.equalsIgnoreCase("ownerOnly")) {
                     node.put(propertyName, (boolean) tableModel.getValueAt(row, col));
                 } else {
-                    node.put(propertyName, (String) tableModel.getValueAt(row, col));
+                    String val = (String) tableModel.getValueAt(row, col);
+                    node.put(propertyName, val != null ? val : "");
                 }
             }
             arrayNode.add(node);

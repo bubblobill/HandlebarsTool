@@ -64,6 +64,7 @@ public class WatchFolder {
 
 
     public void addPathToQueue(final WatchEvent.Kind<?> kind, Path changedPath) {
+        log.debug("addPathToQueue: {}", changedPath);
         Queue<Path> queue = null;
         if(kind == ENTRY_CREATE){
             queue = addQueue;
@@ -76,7 +77,7 @@ public class WatchFolder {
             try {
                 queue.add(changedPath);
                 log.debug("Watcher PCS: fire event");
-                this.pcs.firePropertyChange(kind.name(), queue.size(), changedPath);
+                pcs.firePropertyChange(kind.name(), queue.size(), changedPath);
             } catch (Exception e) {
                 log.error(e.getLocalizedMessage(), e);
             }
@@ -246,6 +247,7 @@ public class WatchFolder {
             WatchKey key;
             try {
                 key = watcher.take();
+                log.debug("take: {}", key);
             } catch (ClosedWatchServiceException e) {
                 return FINISHED;
             } catch (InterruptedException e) {
@@ -263,6 +265,7 @@ public class WatchFolder {
             for (WatchEvent<?> event : key.pollEvents()) {
                 WatchEvent.Kind<?> kind = event.kind();
                 if (kind == OVERFLOW) {
+                    log.debug("overflow");
                     continue;
                 }
 
@@ -292,7 +295,8 @@ public class WatchFolder {
                     }
                     addPathToQueue(kind, child);
 
-                } catch (Exception _) {
+                } catch (Exception e) {
+                    log.error(e.getLocalizedMessage(), e);
                 }
 
                 // reset key and remove from set if directory no longer accessible
@@ -362,10 +366,7 @@ public class WatchFolder {
                 })
                 .cancel(true);
     }
+    public static State getState(){
+        return STATE.get();
+    }
 }
-
-
-
-
-
-

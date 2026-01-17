@@ -10,12 +10,15 @@ import com.github.jknack.handlebars.helper.*;
 import com.github.jknack.handlebars.helper.ext.AssignHelper;
 import com.github.jknack.handlebars.helper.ext.IncludeHelper;
 import com.github.jknack.handlebars.helper.ext.NumberHelper;
+import com.github.jknack.handlebars.io.TemplateLoader;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -25,8 +28,18 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class Utils {
-    public static void registerHandlebarsHelpers(Handlebars handlebars) {
+    public static Handlebars createHandlebars(TemplateLoader templateLoader) {
+        Handlebars handlebars = new Handlebars(templateLoader);
+        handlebars.setStringParams(true);
+        handlebars.setCharset(StandardCharsets.ISO_8859_1);
+        handlebars.parentScopeResolution(false);
+        setHBHelpers(handlebars);
+        return handlebars;
+    }
+
+    public static void setHBHelpers(Handlebars handlebars) {
         // ---- HELPERS ----
+        handlebars.registerHelper("handlebars.logger.log", HBLogger.INSTANCE);
         handlebars.registerHelper(HelperRegistry.HELPER_MISSING, (_, options) -> new Handlebars.SafeString(options.fn.text()));
         handlebars.registerHelper("json", Jackson2Helper.INSTANCE);
         StringHelpers.register(handlebars);
@@ -35,6 +48,7 @@ public class Utils {
         handlebars.registerHelper(AssignHelper.NAME, AssignHelper.INSTANCE);
         handlebars.registerHelper(IncludeHelper.NAME, IncludeHelper.INSTANCE);
         Arrays.stream(MapToolHelpers.values()).forEach(h -> handlebars.registerHelper(h.name(), h));
+
     }
 
     public static void commonResponseBits(HttpServletResponse response) {
@@ -188,5 +202,40 @@ public class Utils {
         }
     }
 
+    public static class HBLogger extends LogHelper {
+        private static final Logger log = LoggerFactory.getLogger(HBLogger.class);
+        @Override
+        public Object apply(Object context, Options options) throws IOException {
+            StringBuilder sb = new StringBuilder();
+            String level = options.hash("level", "info");
+            TagType tagType = options.tagType;
+            if (tagType.inline()) {
+                sb.append(context);
+                for (int i = 0; i < options.params.length; i++) {
+                    sb.append(" ").append((Object) options.param(i));
+                }
+            } else {
+                sb.append(options.fn());
+            }
+            System.out.println("Handlebars(" + level + "): " + sb.toString().trim());
+            switch (level) {
+                case "error":
+                    log.error(sb.toString().trim());
+                    break;
+                case "debug":
+                    log.debug(sb.toString().trim());
+                    break;
+                case "warn":
+                    log.warn(sb.toString().trim());
+                    break;
+                case "trace":
+                    log.trace(sb.toString().trim());
+                    break;
+                default:
+                    log.info(sb.toString().trim());
+            }
+            return null;
+        }
+    }
 }
 

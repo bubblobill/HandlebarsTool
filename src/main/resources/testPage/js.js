@@ -1,11 +1,28 @@
 //establish Server-Sent Events connection
-const evtSource = new EventSource("/sse");
+var evtSource = new EventSource("/sse");
+//function reconnect(){
+//    if(evtSource.readyState == 2){
+//        evtSource = new EventSource("/sse");
+//        setTimeout(reconnect, 1500);
+//    }
+//}
+//evtSource.onerror = (event) => {
+//    console.error("EventSource failed: retry");
+//    reconnect();
+// };
 // Server-Side Events, i.e. updates
 evtSource.onmessage = (event) => {
-    console.log("refresh notification")
-    console.log(event.data);
-    reloadPage();
+    console.log("refresh notification -> event.data: " + event.data);
+    const data = JSON.parse(event.data);
+    if(data["idle"]){
+    } else if(data["template-change"]){
+        reloadPage();
+    } else if(data["source-change"]){
+        reloadSheet();
+    }
 };
+
+
 
 const winBtn = document.getElementById("separate");
 const reloadBtn = document.getElementById("reload");
@@ -19,11 +36,10 @@ const openFolder = document.getElementById("openFolder");
 window.addEventListener("load", function () {
     for(const arrow of document.querySelectorAll(".radio-label")){ arrow.innerHTML = "&#x27A4;"; }
 
-
     sheetSelect.addEventListener("change", function(e){
         if(sheetSelect.value != null && sheetSelect.value != undefined && sheetSelect.value != "null" && sheetSelect.value != ""){
             ss.src = "http://localhost:" + window.location.port + "/sheet/" + sheetSelect.value;
-            link.href = ss.src;
+            link.href = ss.src + "?s";
         } else {
             ss.src = "http://localhost:" + window.location.port + "/sheet/_default.hbs";
             }
@@ -34,9 +50,16 @@ window.addEventListener("load", function () {
     });
 
     for(const el of submitElements){
-        el.addEventListener("change",function(){
-            submitForm(el.form);
-        });
+        if(el.type == "submit"){
+            el.addEventListener("click",function(evt){
+                document.getElementById("cycle").value = evt.target.value;
+                submitForm(el.form);
+            });
+        } else {
+            el.addEventListener("change",function(){
+                submitForm(el.form);
+            });
+        }
     }
 
     if(sheetSelect.value == undefined){ sheetSelect.selectedIndex = -1; }

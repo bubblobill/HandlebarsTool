@@ -44,7 +44,7 @@ public class SheetsObject {
         return WATCH_CHANGE.get();
     }
 
-    private static final Executor DELAYED_EXECUTOR = CompletableFuture.delayedExecutor(110, TimeUnit.MILLISECONDS);
+    private static final Executor DELAYED_EXECUTOR = CompletableFuture.delayedExecutor(80, TimeUnit.MILLISECONDS);
     public static final PropertyChangeListener propertyChangeListener = e -> DELAYED_EXECUTOR.execute(() -> {
         log.debug("Watch change PCL start");
         boolean rebuild = false;
@@ -78,7 +78,7 @@ public class SheetsObject {
         }
 
         setWatchChange(notify || getWatchChange());
-        log.debug("Watch change PCL end");
+        log.info("Watch change PCL end");
     });
 
     public static boolean setFolder(Path folder_) {

@@ -16,8 +16,9 @@ body {
   display: inline grid;
   font-size: 16pt;
   column-gap: .6em;
+  row-gap: .3em;
   grid-template-areas:
-      "s pad ."
+      "s pad ic"
       "s op op"
       ". op op"
       "d op op";
@@ -29,7 +30,8 @@ body {
 .s { grid-area: s; }
 .c { grid-area: c; }
 .op { grid-area: op; }
-.d { grid-area: d }
+.d { grid-area: d; }
+.ic { grid-area: ic; justify-self: center; align-self: end; }
 .hidden { display: none; }
 
 #data {

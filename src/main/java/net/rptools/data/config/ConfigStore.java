@@ -92,7 +92,7 @@ public class ConfigStore {
             useBackingFile.set(false);
             rootNode = DEFAULTS.deepCopy();
         }
-        ROOT = OBJECT_MAPPER.valueToTree(rootNode); rootNode.deepCopy();
+        ROOT = OBJECT_MAPPER.valueToTree(rootNode);
         FIELD_NAMES.forEach(name -> {
             JsonNode node = ROOT.get(name);
             if(node == null || node.isNull() || node.isMissingNode() ||

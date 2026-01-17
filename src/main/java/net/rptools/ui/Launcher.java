@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.io.IOError;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -241,7 +242,7 @@ public class Launcher extends JDialog {
         serverStart.setEnabled(!success);
         changeButton.setEnabled(!success);
         tokenDataset.setEnabled(!success);
-        editButton.setEnabled(!success);
+//        editButton.setEnabled(!success);
         resetButton.setEnabled(!success);
         createButton.setEnabled(!success);
         port.setEnabled(!success);
@@ -251,7 +252,7 @@ public class Launcher extends JDialog {
 
     private boolean start() {
         boolean success = false;
-        if(TemplateData.initialiseTemplateData()) {
+        if (TemplateData.initialiseTemplateData()) {
             try {
                 if (Pref.getBoolean(Config.WATCH_FOLDER)) {
                     watchFolder = new WatchFolder(Pref.getPath(Config.TEMPLATE_FOLDER));
@@ -365,7 +366,7 @@ public class Launcher extends JDialog {
         configFile.setText("");
         panel1.add(configFile, new GridConstraints(10, 1, 1, 8, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label5 = new JLabel();
-        label5.setText("Pref File");
+        label5.setText("Config File");
         panel1.add(label5, new GridConstraints(10, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label6 = new JLabel();
         label6.setText("Templates Folder");

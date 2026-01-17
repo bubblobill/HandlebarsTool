@@ -1,7 +1,6 @@
 window.addEventListener("load", function () {
     // Let k listen for keydown
     window.addEventListener("keydown", function (event) {
-        console.log(event.key);
         switch(event.key){
             case "s":
             case "S": openFolder.click(); break;
@@ -17,6 +16,8 @@ window.addEventListener("load", function () {
             case "R": reload.click(); break;
             case "d":
             case "D": showData.click(); break;
+            case "[": document.getElementById("prev").click(); break;
+            case "]": document.getElementById("next").click(); break;
         };
     });
 });

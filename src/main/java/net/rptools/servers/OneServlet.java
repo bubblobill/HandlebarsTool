@@ -1,8 +1,10 @@
 package net.rptools.servers;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.jknack.handlebars.*;
 import com.github.jknack.handlebars.context.MapValueResolver;
@@ -13,7 +15,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import net.rptools.data.SheetsObject;
 import net.rptools.data.TemplateData;
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
@@ -30,11 +31,16 @@ import org.jsoup.parser.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
@@ -44,100 +50,150 @@ import static net.rptools.data.TemplateData.TEMPLATE_DATA;
 import static net.rptools.data.config.Config.THEME;
 
 public class OneServlet extends HttpServlet {
+
     static final ObjectReader TEMPLATE_UPDATER = OBJECT_MAPPER.readerForUpdating(TEMPLATE_DATA);
     private static final Logger log = LoggerFactory.getLogger(OneServlet.class);
     private static final Template PAGE_TEMPLATE;
     private static final String RESOURCE_PATH = "/testPage";
     private static final TemplateLoader CLASS_PATH_TEMPLATE_LOADER = new ClassPathTemplateLoader(RESOURCE_PATH);
     private static final TemplateLoader PATH_TEMPLATE_LOADER = new FileTemplateLoader(Pref.getString(Config.TEMPLATE_FOLDER));
-    private static final Handlebars PAGE_BARS = new Handlebars(CLASS_PATH_TEMPLATE_LOADER);
-    private static final Handlebars HANDLEBARS = new Handlebars(PATH_TEMPLATE_LOADER);
+    private static final Handlebars PAGE_BARS = Utils.createHandlebars(CLASS_PATH_TEMPLATE_LOADER);
+    private static final Handlebars HANDLEBARS = Utils.createHandlebars(PATH_TEMPLATE_LOADER);
 
     private static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {
-};
-    private static final Resource TEMPLATE_RESOURCE;
+    };
+    private static Resource templateResource;
     private static final Resource CLASSPATH_RESOURCE;
+    private static final Resource TOKEN_IMAGES_RESOURCE;
+
     private static final ObjectNode CSS_OBJECT = Pref.getObjectNode(Config.THEME_CSS);
     private static String theme = Pref.getString(THEME);
     private static String themeCSS = Pref.getObjectNode(Config.THEME_CSS).get(theme).asText();
     private static Server server;
     private static CompletableFuture<?> sseFuture = CompletableFuture.completedFuture(true);
+    private static final String IMAGE_CYCLE_JAVASCRIPT_TEXT;
+    private static final ArrayNode TOKEN_IMAGES = OBJECT_MAPPER.createArrayNode();
+    protected static final AtomicBoolean TEMPLATE_DATA_CHANGED = new AtomicBoolean(false);
+    private static final Map<String, Double> AR_MAP = new HashMap<>();
+    private static int imageIndex = 0;
+    private static int initialHeight;
+    private static int initialWidth;
     static {
         try {
-            Utils.registerHandlebarsHelpers(HANDLEBARS);
-            Utils.registerHandlebarsHelpers(PAGE_BARS);
+            Utils.setHBHelpers(HANDLEBARS);
+            Utils.setHBHelpers(PAGE_BARS);
             PAGE_TEMPLATE = PAGE_BARS.compile(CLASS_PATH_TEMPLATE_LOADER.sourceAt("testPage"));
             CLASSPATH_RESOURCE = new PathResourceFactory().newClassLoaderResource(RESOURCE_PATH);
-            TEMPLATE_RESOURCE = new PathResourceFactory().newResource(Pref.getString(Config.TEMPLATE_FOLDER));
+            templateResource = new PathResourceFactory().newResource(Pref.getString(Config.TEMPLATE_FOLDER));
+            TOKEN_IMAGES_RESOURCE = "/testPage/tokenImages".equals(Pref.getString(Config.TOKEN_IMAGES_FOLDER)) ?
+                    new PathResourceFactory().newClassLoaderResource(Pref.getString(Config.TOKEN_IMAGES_FOLDER)):
+                    new PathResourceFactory().newResource(Pref.getString(Config.TOKEN_IMAGES_FOLDER));
+
+            TOKEN_IMAGES_RESOURCE.getAllResources().forEach(resource -> {
+                if(!resource.isDirectory()){
+                    String path = "\"" + CLASSPATH_RESOURCE.getURI().relativize(resource.getURI()).toASCIIString() + "\"";
+                    try{
+                        BufferedImage bi = ImageIO.read(resource.newInputStream());
+                        AR_MAP.put(path, (double) (bi.getHeight()/bi.getWidth()));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    TOKEN_IMAGES.add(path);
+                }
+            });
+            TEMPLATE_DATA.set("tokenImageURIs", TOKEN_IMAGES);
+
+            Template imageCycle = PAGE_BARS.compile("imageCycle");
+            Map<String, Object> map = OBJECT_MAPPER.readValue(TEMPLATE_DATA.toString(), MAP_TYPE_REFERENCE);
+            Context context = Context
+                    .newBuilder(map)
+                    .push(MapValueResolver.INSTANCE)
+                    .build();
+            IMAGE_CYCLE_JAVASCRIPT_TEXT = imageCycle.apply(context);
+            HANDLEBARS.setCharset(StandardCharsets.ISO_8859_1);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+    private static final java.util.List<Resource> RESOURCE_LIST = List.of(templateResource, CLASSPATH_RESOURCE, TOKEN_IMAGES_RESOURCE);
 
     public OneServlet(Server _server) {
         server = _server;
+        TOKEN_IMAGES.add(TEMPLATE_DATA.get("image"));
+        initialHeight = TEMPLATE_DATA.get("portraitHeight").asInt();
+        initialWidth = TEMPLATE_DATA.get("portraitWidth").asInt();
     }
 
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
         log.debug("POST Request - > {}", request.getRequestURI());
-        if (request.getRequestURI().startsWith("/api")) {
-            try (BufferedReader reader = request.getReader()) { // try-with-resources auto-closes the reader
-                String string = reader.lines().collect(Collectors.joining());
-                if (string.contains("openFolder")) {
-                    try {
-                        Desktop.getDesktop().browse(Pref.getPath(Config.TEMPLATE_FOLDER).toUri());
-                    } catch (IOException ex) {
-                        Alerts.whoops(ex);
-                    }
-                } else if (!string.equals("{}")) {
-                    OneServlet.TEMPLATE_UPDATER.readValue(string);
-                    TemplateData.filterProperties();
-                }
-            } catch (IOException e) {
-                log.error(e.getLocalizedMessage(), e);
+        String formString = null;
+        try (BufferedReader reader = request.getReader()) { // try-with-resources auto-closes the reader
+            formString = reader.lines().collect(Collectors.joining());
+        } catch (IOException e) {
+            log.error(e.getLocalizedMessage(), e);
+            throw new RuntimeException(e);
+        }
+        if (request.getRequestURI().startsWith("/api/image")) {
+            try {
+                cycleImage(OBJECT_MAPPER.readTree(formString).get("cycle").asInt());
+            } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
+        } else
+        if (request.getRequestURI().startsWith("/api/folder")) {
+            try {
+                Desktop.getDesktop().browse(Pref.getPath(Config.TEMPLATE_FOLDER).toUri());
+            } catch (IOException ex) {
+                Alerts.whoops(ex);
+            }
+        } else
+        if (request.getRequestURI().startsWith("/api")) {
+             if (!formString.equals("{}")) {
+                 try {
+                     OneServlet.TEMPLATE_UPDATER.readValue(formString);
+                     TemplateData.filterProperties();
+                 } catch (JsonProcessingException e) {
+                     throw new RuntimeException(e);
+                 }
+             }
         }
     }
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
         log.debug("OneServlet GET request -> {}", request.getRequestURI());
+        Utils.commonResponseBits(response);
         String requestURI = request.getRequestURI().strip();
         if (requestURI.toLowerCase().endsWith(".hbs") || requestURI.equalsIgnoreCase("/sheet/default")) {
-            handlebarsGet(request, response);
+            getHandlebars(request, response);
         } else if (requestURI.toLowerCase().endsWith("mt-stat-sheet.css")) {
             getMtCss(response);
-        } else if (requestURI.toLowerCase().startsWith("/sse")) {
-            if(!sseFuture.state().equals(Future.State.RUNNING)){
-                // Set content type for SSE
-                response.setContentType("text/event-stream"); //most important part
-                response.setCharacterEncoding("UTF-8");
-                // Disable caching
-                response.setHeader("X-Accel-Buffering", "no");
-                response.setHeader("Cache-Control", "no-cache");
-                response.setHeader("Connection", "keep-alive");
-                response.setStatus(200);
-                sseFuture = CompletableFuture.runAsync(() ->
-                {
-                    try {
-                        sseGet(request, response);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-            }
-        } else {
+        } else
+//            if (requestURI.toLowerCase().startsWith("/sse")) {
+//            response.setContentType("text/event-stream"); //most important part
+//            if (!sseFuture.state().equals(Future.State.RUNNING)) {
+//                sseFuture = CompletableFuture.runAsync(() ->
+//                {
+//                    try {
+//                        sseGet(request, response);
+//                    } catch (IOException e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                });
+//            }
+//        }
+//            else
+            {
             getFile(request, response);
         }
     }
 
-    protected void handlebarsGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
+    protected void getHandlebars(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
         log.debug("Handlebars GET request -> {}", request.getRequestURI());
         Writer writer = null;
-        Utils.commonResponseBits(response);
 
         Map<String, Object> map = OBJECT_MAPPER.readValue(TEMPLATE_DATA.toString(), MAP_TYPE_REFERENCE);
         Context context = Context
@@ -145,19 +201,19 @@ public class OneServlet extends HttpServlet {
                 .push(MapValueResolver.INSTANCE)
                 .build();
 
-            String output = "";
-            boolean setBase = true;
-            try{
-            if(request.getRequestURI().equalsIgnoreCase("/sheet/_default.hbs")){
+        String output = "";
+        boolean isSheet = false;
+        try {
+            if (request.getRequestURI().equalsIgnoreCase("/sheet/_default.hbs")) {
                 output = FALLBACK_TEMPLATE.apply(context);
             } else if (request.getRequestURI().endsWith("Page.hbs")) {
                 output = PAGE_TEMPLATE.apply(context);
-                setBase = false;
             } else if (request.getRequestURI().endsWith(".hbs")) {
                 try {
                     Template template = HANDLEBARS.compile(PATH_TEMPLATE_LOADER.sourceAt(requestURI(request).replace("/sheet", "").replace(".hbs", "")));
                     output = template.apply(context);
-                } catch (HandlebarsException|IOException e){
+                    isSheet = true;
+                } catch (HandlebarsException | IOException e) {
                     ObjectNode node = OBJECT_MAPPER.valueToTree(TEMPLATE_DATA);
                     node.put("message", e.getLocalizedMessage());
                     context = Context
@@ -174,18 +230,24 @@ public class OneServlet extends HttpServlet {
             cssNode.attr("href", "./css/mt-stat-sheet.css");
 
             var head = doc.head();
-            if (setBase) {
-                var base = doc.createElement("base");
-                base.attr("href", "http://localhost:" + Pref.getInt(Config.SERVER_PORT) + "/sheet");
-                head.insertChildren(0, base);
+            if(isSheet) {
+                var baseNode = doc.createElement("base");
+                baseNode.attr("href", "./sheet");
+                head.insertChildren(0, baseNode);
 
-                for (Element element : head.children()) {
-                    if (element.tag().equals(Tag.valueOf("link"))) {
-                        if (element.hasAttr("href")) {
-                            if (element.attr("href").toLowerCase().startsWith("lib")) {
-                                head.insertChildren(head.elementSiblingIndex(), cssNode);
-                                element.remove();
-                            }
+                if(request.getQueryString() != null) {
+                    var imageCycleNode = doc.createElement("script");
+                    imageCycleNode.id("imageCycle");
+                    imageCycleNode.html(IMAGE_CYCLE_JAVASCRIPT_TEXT);
+                    doc.body().insertChildren(-1, imageCycleNode);
+                }
+            }
+            for (Element element : head.children()) {
+                if (element.tag().equals(Tag.valueOf("link"))) {
+                    if (element.hasAttr("href")) {
+                        if (element.attr("href").toLowerCase().startsWith("lib")) {
+                            head.insertChildren(head.elementSiblingIndex(), cssNode);
+                            element.remove();
                         }
                     }
                 }
@@ -226,22 +288,43 @@ public class OneServlet extends HttpServlet {
         writer.write(themeCSS);
     }
 
-    protected void sseGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        log.debug("SSEServlet request -> {}", request.getRequestURI());
-        Writer writer = response.getWriter();
-        if (server != null && server.isRunning() && SheetsObject.getWatchChange()) {
-                writer.write("data: true\n\n");
-                writer.flush();
-                log.debug("SSEServlet -> Update notification sent");
-                SheetsObject.setWatchChange(false);
-            }
-            try {
-                sleep(400);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        writer.close();
-    }
+//    protected void sseGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+//        log.debug("SSEServlet request -> {}", request.getRequestURI());
+//
+//        if(Pref.getBoolean(Config.WATCH_FOLDER) && !WatchFolder.getState().equals(Constants.State.STARTED)){
+//            log.info("WatchFolder issue");
+//        }
+//        // Set content type for SSE
+//        response.setCharacterEncoding("UTF-8");
+//        // Disable caching
+//        response.setHeader("X-Accel-Buffering", "no");
+//        response.setHeader("Cache-Control", "no-cache");
+//        response.setHeader("Connection", "keep-alive");
+//        response.setStatus(200);
+//        Writer writer = response.getWriter();
+//        if (server != null && server.isRunning()){
+//            if(SheetsObject.getWatchChange()){
+//                CompletableFuture.runAsync(()-> templateResource = new PathResourceFactory().newResource(Pref.getString(Config.TEMPLATE_FOLDER)));
+//                writer.write("data: {\"source-change\":true, \"template-change\":false, \"idle\": false}\n\n");
+//                SheetsObject.setWatchChange(false);
+//                log.info("SSEServlet -> Source change notification sent");
+//            } else if(TEMPLATE_DATA_CHANGED.get()) {
+//                log.info("SSEServlet -> Template change notification sent");
+//                writer.write("data: {\"source-change\":false, \"template-change\":true, \"idle\": false}\n\n");
+//                TEMPLATE_DATA_CHANGED.set(false);
+//            } else {
+//                writer.write("data: {\"source-change\":false, \"template-change\":false, \"idle\": false}\n\n");
+//            }
+//
+//            writer.flush();
+//        }
+//        try {
+//            sleep(240);
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
+//        writer.close();
+//    }
 
     /**
      * Remove context path from the request's URI.
@@ -257,19 +340,29 @@ public class OneServlet extends HttpServlet {
 
     protected void getFile(HttpServletRequest request, HttpServletResponse response) throws IOException {
         log.debug("getFile: {}", request.getRequestURI());
-        String subPath = request.getRequestURI().substring(1);
-
+        String subPath = request.getRequestURI().substring(1).replace("?cachelib=false", "");
         if (request.getRequestURI() == null || request.getRequestURI().isBlank()) {
+            log.error("No resource specified: {}", request.getRequestURI());
             response.sendError(HttpServletResponse.SC_NO_CONTENT);
             return;
         }
-        Resource resource = CLASSPATH_RESOURCE.resolve(subPath);
-        if (!resource.exists()) {
-            resource = TEMPLATE_RESOURCE.resolve(subPath);
-            if (!resource.exists()) {
-                response.reset();
-                return;
+        Resource resource = null;
+        for(Resource resource_ : RESOURCE_LIST){
+            if(resource_.equals(TOKEN_IMAGES_RESOURCE) && subPath.contains("tokenImages")) {
+                resource = TOKEN_IMAGES_RESOURCE.resolve(subPath.substring(subPath.indexOf("tokenImages") + 11));
+            } else if(resource_.equals(templateResource) && subPath.startsWith("sheet/")){
+                resource = templateResource.resolve(subPath.substring(6));
+            } else {
+                resource = CLASSPATH_RESOURCE.resolve(subPath);
             }
+            if(resource.exists()){
+                break;
+            }
+        }
+        if (resource == null || !resource.exists()) {
+            log.error("Resource not found: {}", request.getRequestURI());
+            response.reset();
+            return;
         }
         if (resource.isReadable() && !resource.isDirectory()) {
             String mimeType = getServletContext().getMimeType(resource.getPath().toString());
@@ -287,11 +380,39 @@ public class OneServlet extends HttpServlet {
                     os.flush();
                     os.close();
                 } else {
+                    log.error("Resource not accessible: {}", request.getRequestURI());
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "File not readable.");
                 }
+            } catch (Exception e) {
+                log.error(e.getLocalizedMessage(), e);
             }
         } else {
+            log.error("Resource not readable: {}", request.getRequestURI());
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "File not readable.");
         }
+    }
+
+    private void cycleImage(int direction){
+        int max = TOKEN_IMAGES.size() -1;
+        if(max == 0){
+            return;
+        }
+        imageIndex += direction;
+        if(imageIndex < 0){
+            imageIndex = max;
+        } else if(imageIndex > max){
+            imageIndex = 0;
+        }
+
+        TEMPLATE_DATA.put("image", TOKEN_IMAGES.get(imageIndex).asText());
+        if(imageIndex == 0){
+            TEMPLATE_DATA.put("portraitHeight", initialHeight);
+            TEMPLATE_DATA.put("portraitWidth", initialWidth);
+            TEMPLATE_DATA_CHANGED.set(true);
+        } else {
+            double AR = AR_MAP.get(TOKEN_IMAGES.get(imageIndex).asText());
+            TEMPLATE_DATA.put("portraitWidth", initialHeight * AR);
+        }
+
     }
 }

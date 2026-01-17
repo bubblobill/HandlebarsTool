@@ -1,7 +1,8 @@
 package net.rptools.servers;
 
-import jakarta.servlet.Servlet;
+import jakarta.servlet.http.HttpServletRequest;
 import net.rptools.data.Constants;
+import net.rptools.data.SheetsObject;
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
 import net.rptools.util.Utils;
@@ -10,26 +11,32 @@ import org.eclipse.jetty.ee10.servlet.ServletHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.*;
+import org.eclipse.jetty.servlets.EventSource;
+import org.eclipse.jetty.servlets.EventSourceServlet;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.resource.PathResourceFactory;
 import org.eclipse.jetty.util.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+
+import static net.rptools.servers.OneServlet.TEMPLATE_DATA_CHANGED;
 
 @SuppressWarnings("unused")
 public class Servitude {
     private static final Logger log = LoggerFactory.getLogger(Servitude.class);
     private static final String RESOURCE_FOLDER = "/testPage";
-    private static final Path REQUEST_LOG_FILE = Constants.USER_DIR.toAbsolutePath().resolve("_Log").resolve("HandlebarsTool.log");
+    private static final Path REQUEST_LOG_FILE = Constants.USER_DIR.toAbsolutePath().resolve("_Log").resolve("HandlebarsTool_request.log");
     private static final AtomicReference<Constants.State> state = new AtomicReference<>(Constants.State.NOT_STARTED);
     private final Resource CLASS_PATH_RESOURCE;
     protected final Server server;
-
+    private static Servitude instance = null;
     public Servitude() {
+        instance = this;
         try {
             CLASS_PATH_RESOURCE = new PathResourceFactory().newClassLoaderResource(RESOURCE_FOLDER);
         } catch (IllegalArgumentException e) {
@@ -70,7 +77,8 @@ public class Servitude {
                     log.info("Server stopped.");
                 }
             });
-            ContextHandler contextHandler = createContext(new OneServlet(server));
+
+            ContextHandler contextHandler = createContext();
             server.setHandler(contextHandler);
 
         } catch (Exception e) {
@@ -81,10 +89,37 @@ public class Servitude {
         state.set(Constants.State.READY);
     }
 
-    protected ContextHandler createContext(Servlet servlet) {
-        ServletHolder servletHolder = new ServletHolder(servlet);
+    protected ContextHandler createContext(){
+        ServletHolder oneServletHolder = new ServletHolder("OneServlet", new OneServlet(server));
+        ServletHolder sseServletHolder = new ServletHolder("SSEServlet", new EventSourceServlet() {
+            @Override
+            protected EventSource newEventSource(HttpServletRequest request) {
+                return new EventSource() {
+                    @Override
+                    public void onOpen(Emitter emitter_) throws IOException {
+                        EventSourceServlet.EventSourceEmitter emitter = (EventSourceServlet.EventSourceEmitter) emitter_;
+                        String dataString;
+                        if(SheetsObject.getWatchChange()){
+                            dataString = "{\"source-change\":true, \"template-change\":false, \"idle\": false}";
+                            SheetsObject.setWatchChange(false);
+                        } else if(TEMPLATE_DATA_CHANGED.get()) {
+                            dataString = "{\"source-change\":false, \"template-change\":true, \"idle\": false}";
+                            TEMPLATE_DATA_CHANGED.set(false);
+                        } else {
+                            dataString = "{\"source-change\":false, \"template-change\":false, \"idle\": true}";
+                        }
+                        log.debug(dataString);
+                        emitter.data(dataString);
+                    }
+                    @Override public void onClose() { }
+                };
+            }
+        });
         ServletHandler servletHandler = new ServletHandler();
-        servletHandler.addServletWithMapping(servletHolder, "/");
+
+        servletHandler.addServletWithMapping(sseServletHolder, "/sse");
+        servletHandler.addServletWithMapping(oneServletHolder, "/");
+
         ContextHandler contextHandler = new ServletContextHandler();
         contextHandler.setHandler(servletHandler);
         contextHandler.setBaseResource(CLASS_PATH_RESOURCE);
@@ -148,4 +183,7 @@ public class Servitude {
             throw new RuntimeException(e);
         }
     };
+    public static Servitude getInstance(){
+        return instance;
+    }
 }

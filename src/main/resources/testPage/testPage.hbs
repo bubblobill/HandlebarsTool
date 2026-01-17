@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="stylesheet" href="testPage.css">
     <link rel="stylesheet" href="brushedMetal.css">
-</head>
+    </head>
 <body>
     <div style="display:none;">
     <a id="newWindow" target="_blank" href="" class="hidden"></a>
@@ -20,7 +20,8 @@
     <form id="fm_view" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
     <form id="fm_background" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
     <form id="fm_theme" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
-    <form id="fm_folder" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
+    <form id="fm_folder" method="dialog" action="/api/folder" enctype="application/x-www-form-urlencoded"></form>
+    <form id="fm_image" method="dialog" action="/api/image" enctype="application/x-www-form-urlencoded"></form>
     </div>
     <div class="content">
         <table id="pad">
@@ -41,6 +42,20 @@
             </tr>
         </table>
 
+        <table class="ga ic">
+            <tr><th colspan="2">Image Cycle</th></tr>
+            <tr>
+                <td>
+                    <input type="submit" form="fm_image" id="prev" name="prev" class="hidden submit-on-change" value="-1">
+                    <input type="hidden" form="fm_image" name="cycle" id="cycle" value="1">
+                    <label for="prev"><< Prev</label>
+                </td>
+                <td>
+                    <input type="submit" form="fm_image" id="next" name="next" class="hidden submit-on-change" value="1">
+                    <label for="prev">Next >></label>
+                </td>
+            </tr>
+        </table>
         <table class="ga s">
             <tr>
                 <td>
@@ -54,7 +69,7 @@
             </tr>
             <tr>
                 <td>
-                    <select id="sheet" form="fm_sheet" name="sheet" class="submit-on-change" size="14">
+                    <select id="sheet" form="fm_sheet" name="sheet" class="submit-on-change" size="17">
                         {{#if sheets~}}
                             {{#each sheets~}}
                                 <option value="{{this.entry}}"
@@ -131,11 +146,11 @@
             </tr>
         </table>
 
-        <p id="data">{{#json this}}{{/json}}</p>
         <button id="showData"><u>D</u>ata</button>
     </div>
     <iframe id="overlay" src=""></iframe>
     <script src="js.js" defer></script>
     <script src="keyControls.js" defer></script>
+    <div id="data">{{#json this}}{{/json}}</div>
 </body>
 </html>

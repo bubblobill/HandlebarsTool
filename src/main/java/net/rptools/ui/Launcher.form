@@ -28,7 +28,7 @@
               <text value="Default Location"/>
             </properties>
           </component>
-          <component id="a85d7" class="javax.swing.JComboBox" binding="locationCombo">
+          <component id="a85d7" class="javax.swing.JComboBox" binding="locationCombo" custom-create="true">
             <constraints>
               <grid row="7" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -61,7 +61,7 @@
               <text value="Theme"/>
             </properties>
           </component>
-          <component id="6ecf5" class="javax.swing.JComboBox" binding="themeCombo">
+          <component id="6ecf5" class="javax.swing.JComboBox" binding="themeCombo" custom-create="true">
             <constraints>
               <grid row="6" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>

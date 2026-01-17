@@ -2,20 +2,23 @@
 <Configuration status="ERROR">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} (%F:%L) [%t] %-5level - %msg%n"/>
+            <PatternLayout pattern="%d{HH:mm:ss} [%t] (%F:%L) %-5level - %msg%n"/>
             <Filters>
-                <RegexFilter regex=".* apache .*" onMatch="DENY" onMismatch="ACCEPT"/>
+                <StringMatchFilter onMatch="DENY" onMismatch="ACCEPT" text="apache"/>
             </Filters>
         </Console>
         <RollingFile
                 name="LogFile"
                 fileName="${sys:user.dir}/_Log/HandlebarsTool.log"
-                filePattern="${sys:user.dir}/_Log/archive/handlebarsTool_%d{yyyy-MM-dd_HH-mm-ss}.log.zip"
+                filePattern="${sys:user.dir}/_Log/archive/handlebarsTool_%d{yyyy-MM-dd_HH-mm}.log.zip"
                 ignoreExceptions="false">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"/>
+            <PatternLayout pattern="%d{MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"/>
+            <Filters>
+                <StringMatchFilter onMatch="ACCEPT" onMismatch="DENY" text="rptools"/>
+            </Filters>
             <Policies>
                 <OnStartupTriggeringPolicy/>
-                <SizeBasedTriggeringPolicy size="10 MB"/>
+                <SizeBasedTriggeringPolicy size="2 MB"/>
             </Policies>
             <DefaultRolloverStrategy max="10">
                 <Delete basePath="${sys:user.dir}/_Log/archive">
@@ -24,11 +27,57 @@
                 </Delete>
             </DefaultRolloverStrategy>
         </RollingFile>
+
+        <RollingFile
+                name="HandlebarsLogFile"
+                fileName="${sys:user.dir}/_Log/Handlebars.log"
+                filePattern="${sys:user.dir}/_Log/archive/handlebars_%d{yyyy-MM-dd_HH-mm}.log.zip"
+                ignoreExceptions="false">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"/>
+            <Filters>
+                <StringMatchFilter onMatch="ACCEPT" onMismatch="DENY" text="jknack"/>
+            </Filters>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="2 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10">
+                <Delete basePath="${sys:user.dir}/_Log/archive">
+                    <IfFileName glob="handlebars_*.log*"/>
+                    <IfLastModified age="14d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <RollingFile
+                name="JettyLogFile"
+                fileName="${sys:user.dir}/_Log/Jetty.log"
+                filePattern="${sys:user.dir}/_Log/archive/jetty_%d{yyyy-MM-dd_HH-mm}.log.zip"
+                ignoreExceptions="false">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"/>
+            <Filters>
+                <StringMatchFilter onMatch="ACCEPT" onMismatch="DENY" text="jetty"/>
+            </Filters>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="2 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10">
+                <Delete basePath="${sys:user.dir}/_Log/archive">
+                    <IfFileName glob="jetty_*.log*"/>
+                    <IfLastModified age="14d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+
     </Appenders>
     <Loggers>
-        <Root level="INFO">
-            <AppenderRef ref="Console" level="DEBUG"/>
-            <AppenderRef ref="LogFile"/>
+        <Root level="DEBUG">
+            <AppenderRef ref="Console" level="INFO"/>
+            <AppenderRef ref="LogFile" level="DEBUG"/>
+            <AppenderRef ref="HandlebarsLogFile" level="DEBUG"/>
+            <AppenderRef ref="JettyLogFile" level="DEBUG"/>
         </Root>
     </Loggers>
 </Configuration>

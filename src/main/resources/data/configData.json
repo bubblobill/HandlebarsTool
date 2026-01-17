@@ -5,6 +5,7 @@
   "datasetNames" : [],
   "datasetDefault" : "Basic",
   "templateFolder" : "",
+  "tokenImagesFolder" : "/testPage/tokenImages",
   "addonFolder" : "",
   "handlebarsPort" : 6781,
   "serverPort" : 7891,
