@@ -7,8 +7,8 @@ const imagePaths = {{{tokenImageURIs}}};
 const imageElement = document.querySelectorAll("img.portrait")[0];
 
 function setDimensions(width, height) {
-  root.style.setProperty("--portrait-width", width);
-  root.style.setProperty("--portrait-height", height);
+  root.style.setProperty("--portrait-width", width + "px");
+  root.style.setProperty("--portrait-height", height + "px");
 }
 
 function init(){
@@ -60,6 +60,9 @@ async function loadPic(url) {
 }
 
 window.addEventListener("load", function () {
+    for(const url of imagePaths){
+        loadPic(url);
+    }
     window.addEventListener("keydown", function (event) {
         switch(event.key){
             case "[": cycleImage(-1);
