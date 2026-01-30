@@ -3,9 +3,11 @@ package net.rptools.data;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.StreamWriteFeature;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.io.ClassPathTemplateLoader;
@@ -14,11 +16,19 @@ import org.eclipse.jetty.http.MimeTypes;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Constants {
-    public static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+    public static final XmlMapper XML_MAPPER = XmlMapper.builder()
+            .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_VALUES, true)
+                .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
+                .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+                .configure(FromXmlParser.Feature.AUTO_DETECT_XSI_TYPE, true)
+                .build();
+    public static final ObjectMapper OBJECT_MAPPER = com.fasterxml.jackson.databind.json.JsonMapper.builder()
             .enable(JsonParser.Feature.ALLOW_COMMENTS)
             .enable(StreamWriteFeature.STRICT_DUPLICATE_DETECTION)
             .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
@@ -26,8 +36,62 @@ public class Constants {
             .enable(JsonReadFeature.ALLOW_MISSING_VALUES)
             .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
             .enable(SerializationFeature.INDENT_OUTPUT)
-            .build();
+            .build()
+            ;
     public static final Path USER_DIR = Path.of(System.getProperty("user.dir")).toAbsolutePath();
+
+    public static final String DEFAULT_IMAGE_NAME = "defaultImage";
+
+    public static final List<String> BAR_TAGS = Arrays.asList(
+            "assetId",
+            "assetIdAspectRatio",
+            "assetIds",
+            "assetIdsAspectRatio",
+            "barColor",
+            "bars",
+            "bottomAssetId",
+            "bottomAssetIdAspectRatio",
+            "increments",
+            "mouseover",
+            "name",
+            "opacity",
+            "showGM",
+            "showOthers",
+            "showOwner",
+            "side",
+            "thickness",
+            "topAssetId",
+            "topAssetIdAspectRatio",
+            "type",
+            "value");
+    public static final List<String> STATE_TAGS = Arrays.asList(
+            "assetId",
+            "assetIdAspectRatio",
+            "color",
+            "corner",
+            "grid",
+            "group",
+            "mouseover",
+            "name",
+            "opacity",
+            "order",
+            "showGM",
+            "showOthers",
+            "showOwner",
+            "stroke",
+            "type",
+            "width"
+    );
+    public static final List<String> STROKE_TAGS = Arrays.asList(
+            "dashArray",
+            "dashPhase",
+            "endCap",
+            "lineJoin",
+            "lineWidth",
+            "miterLimit"
+    );
+    public static final List<String> COLOUR_TAGS = Arrays.asList("red","green","blue","alpha");
+
     public enum NoteType {
         HTML("text/html","HTML"),
         MARKDOWN("text/markdown", "Markdown"),

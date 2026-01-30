@@ -29,7 +29,7 @@ java {
     }
 }
 
-
+def cache2kVersion = '2.6.1.Final'
 dependencies {
     implementation("org.beryx.runtime:org.beryx.runtime.gradle.plugin:2.0.1")
 //    implementation 'org.beryx:badass-jlink-plugin:3.1.5'
@@ -40,8 +40,13 @@ dependencies {
     implementation 'jakarta.servlet:jakarta.servlet-api:6.1.0'
     implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
 
+
+    implementation "org.cache2k:cache2k-api:${cache2kVersion}"
+    runtimeOnly "org.cache2k:cache2k-core:${cache2kVersion}"
+    implementation 'com.jayway.jsonpath:json-path:2.10.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
     implementation 'com.fasterxml.jackson.core:jackson-core:2.20.1'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.20.2'
     implementation 'commons-io:commons-io:2.21.0'
 
     implementation 'org.eclipse.jetty:jetty-webapp:11.0.26'

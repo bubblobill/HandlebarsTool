@@ -25,7 +25,7 @@ import static net.rptools.data.Constants.OBJECT_MAPPER;
 public class SheetsObject {
     private static final Logger log = LoggerFactory.getLogger(SheetsObject.class);
     private static final ObjectNode json = OBJECT_MAPPER.createObjectNode();
-    private static String sheet = Pref.getString(Config.SHEET);
+    private static String sheet = Pref.getString(Config.CURRENT_SHEET_NAME);
     private static Path folder = Pref.getPath(Config.TEMPLATE_FOLDER);
     private static boolean loaded = false;
     private static final List<Path> PATH_LIST = Collections.synchronizedList(new ArrayList<>());
@@ -44,7 +44,7 @@ public class SheetsObject {
         return WATCH_CHANGE.get();
     }
 
-    private static final Executor DELAYED_EXECUTOR = CompletableFuture.delayedExecutor(80, TimeUnit.MILLISECONDS);
+    private static final Executor DELAYED_EXECUTOR = CompletableFuture.delayedExecutor(120, TimeUnit.MILLISECONDS);
     public static final PropertyChangeListener propertyChangeListener = e -> DELAYED_EXECUTOR.execute(() -> {
         log.debug("Watch change PCL start");
         boolean rebuild = false;
@@ -86,7 +86,7 @@ public class SheetsObject {
         if (Files.exists(folder_) && Files.isDirectory(folder_)) {
             PATH_LIST.clear();
             folder = folder_;
-            if (Pref.getBoolean(Config.LIB_FILE)) {
+            if (Pref.getBoolean(Config.USE_ADD_ON_JSON_FILE)) {
                 LibraryJSON.setJsonFilePath(folder_);
             }
             Pref.set(Config.TEMPLATE_FOLDER, folder_.toString());
@@ -106,7 +106,7 @@ public class SheetsObject {
                 ObjectNode sheet = OBJECT_MAPPER.createObjectNode();
                 if (SheetsObject.sheet == null) {
                     SheetsObject.sheet = path.getFileName().toString();
-                    Pref.set(Config.SHEET, SheetsObject.sheet);
+                    Pref.set(Config.CURRENT_SHEET_NAME, SheetsObject.sheet);
                 }
                 sheet.put("name", path.getFileName().toString().replaceAll(".hbs", ""));
                 sheet.put("entry", folder_.relativize(path).toString());
@@ -114,11 +114,11 @@ public class SheetsObject {
                 sheet.set("propertyTypes", OBJECT_MAPPER.createArrayNode());
                 arrayNode.add(sheet);
             }
-            if (Pref.getBoolean(Config.LIB_FILE)) {
+            if (Pref.getBoolean(Config.USE_ADD_ON_JSON_FILE)) {
                 LibraryJSON.addSheets(arrayNode);
             }
         }
-        json.put(Config.SHEET, sheet);
+        json.put(Config.CURRENT_SHEET_NAME, sheet);
         loaded = true;
     }
 

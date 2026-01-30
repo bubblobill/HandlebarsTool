@@ -42,20 +42,6 @@
             </tr>
         </table>
 
-        <table class="ga ic">
-            <tr><th colspan="2">Image Cycle</th></tr>
-            <tr>
-                <td>
-                    <input type="submit" form="fm_image" id="prev" name="prev" class="hidden submit-on-change" value="-1">
-                    <input type="hidden" form="fm_image" name="cycle" id="cycle" value="1">
-                    <label for="prev"><< Prev</label>
-                </td>
-                <td>
-                    <input type="submit" form="fm_image" id="next" name="next" class="hidden submit-on-change" value="1">
-                    <label for="prev">Next >></label>
-                </td>
-            </tr>
-        </table>
         <table class="ga s">
             <tr>
                 <td>
@@ -102,13 +88,25 @@
                 <td></td>
                 <td><input type="radio" form="fm_view" name="viewAs" value="player" id="pv" {{#eq viewAs "player"}}checked="checked"{{/eq}} class="submit-on-change"><label for="pv">Player</label></td>
             </tr>
+            {{#if tokenImageObjects}}
             <tr>
-                <td><label for="datasetName" class="c12">Data-Set</label></td>
+                <td><label for="currentTokenImage" class="c12">Token Image</label></td>
                 <td>
-                    <select id="datasetName" form="fm_dataset" name="datasetName" class="c22 submit-on-change">
-                        {{#if datasetNames}}
-                            {{#each datasetNames~}}
-                                <option value="{{this}}" {{#eq this datasetName}}selected="selected"{{/eq}}>{{this}}</option>
+                <select id="currentTokenImage" form="fm_image" name="currentTokenImage" class="c22 submit-on-change">
+                    {{#each tokenImageObjects~}}
+                        <option value="{{this.uri}}" {{#eq this.uri image}}selected="selected"{{/eq}}>{{this.name}}</option>
+                    {{~/each}}
+            </select>
+            </td>
+            </tr>
+            {{/if}}
+            <tr>
+                <td><label for="currentPropertyName" class="c12">Data-Set</label></td>
+                <td>
+                    <select id="currentPropertyName" form="fm_dataset" name="currentPropertyName" class="c22 submit-on-change">
+                        {{#if propertyTypeNames}}
+                            {{#each propertyTypeNames~}}
+                                <option value="{{this}}" {{#eq this currentPropertyName}}selected="selected"{{/eq}}>{{this}}</option>
                             {{~/each}}
                         {{/if}}
                     </select>

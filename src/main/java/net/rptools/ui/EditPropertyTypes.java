@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -69,9 +68,9 @@ public class EditPropertyTypes extends JDialog {
     private JButton importButton;
     private DefaultTableModel tableModel;
 
-    private static String datasetName = Pref.getString("Basic", Pref.getString(Config.DATASET_DEFAULT), Config.DATASET_NAME);
-    private static final List<String> DATA_SET_NAMES = Pref.getList(Config.DATASETS);
-    private static final ObjectNode DEFAULT_DATA_OBJECT = Pref.getObjectNode(Config.DATASETS + "/" + datasetName, Config.DATASETS + "/Basic");
+    private static String currentPropertyName = Pref.getString("Basic", Pref.getString(Config.DEFAULT_PROPERTY_TYPE), Config.CURRENT_PROPERTY_TYPE);
+    private static final List<String> DATA_SET_NAMES = Pref.getList(Config.PROPERTY_TYPES);
+    private static final ObjectNode DEFAULT_DATA_OBJECT = Pref.getObjectNode(Config.PROPERTY_TYPES + "/" + currentPropertyName, Config.PROPERTY_TYPES + "/Basic");
     private static final JFileChooser IMAGE_CHOOSER = new JFileChooser(Pref.getPath(Config.TEMPLATE_FOLDER).toFile());
     private ObjectNode tokenData;
 
@@ -93,7 +92,7 @@ public class EditPropertyTypes extends JDialog {
         getRootPane().setDefaultButton(buttonOK);
 
 
-        loadTokenData(datasetName);
+        loadTokenData(currentPropertyName);
         setValues();
         addListeners();
 
@@ -129,7 +128,7 @@ public class EditPropertyTypes extends JDialog {
         portraitHeight.setModel(new SpinnerNumberModel(tokenData.get("portraitHeight").asDouble(), 20, 500, 1));
         portraitWidth.setModel(new SpinnerNumberModel(tokenData.get("portraitWidth").asDouble(), 20, 500, 1));
 
-        String defaultDataset = Pref.getString(Config.DATASET_DEFAULT);
+        String defaultDataset = Pref.getString(Config.DEFAULT_PROPERTY_TYPE);
         if (defaultDataset != null && !defaultDataset.isBlank()) {
             dataSetCombo.setSelectedItem(defaultDataset);
         }
@@ -253,7 +252,7 @@ public class EditPropertyTypes extends JDialog {
         if (idx > -1) {
             String currentName = dataSetCombo.getItemAt(idx);
             if (currentName.equalsIgnoreCase("Default")) {
-                Pref.getObjectNode(Config.DATASETS).remove(currentName);
+                Pref.getObjectNode(Config.PROPERTY_TYPES).remove(currentName);
             }
             dataSetCombo.removeItemAt(idx);
             if (dataSetCombo.getItemCount() > idx) {
@@ -287,7 +286,7 @@ public class EditPropertyTypes extends JDialog {
 
     private void onSetDefault(ActionEvent e) {
         if (defaultCheckBox.isSelected()) {
-            Pref.set(Config.DATASET_DEFAULT, dataSetCombo.getSelectedItem());
+            Pref.set(Config.DEFAULT_PROPERTY_TYPE, dataSetCombo.getSelectedItem());
         }
     }
 
@@ -562,10 +561,10 @@ public class EditPropertyTypes extends JDialog {
             arrayNode.add(node);
         }
         tokenData.set("properties", arrayNode);
-        Pref.set(Config.DATASETS + "/" + datasetName, tokenData);
+        Pref.set(Config.PROPERTY_TYPES + "/" + currentPropertyName, tokenData);
         ArrayNode names = OBJECT_MAPPER.createArrayNode();
-        Pref.getObjectNode(Config.DATASETS).fieldNames().forEachRemaining(names::add);
-        Pref.set(Config.DATASET_NAMES, names);
+        Pref.getObjectNode(Config.PROPERTY_TYPES).fieldNames().forEachRemaining(names::add);
+        Pref.set(Config.PROPERTY_TYPE_NAMES, names);
     }
 
     private void newTokenData(String name) {
@@ -577,12 +576,12 @@ public class EditPropertyTypes extends JDialog {
     }
 
     private void loadTokenData(String name) {
-        datasetName = name.strip().replaceAll(" ", "_");
-        boolean exists = !DATA_SET_NAMES.stream().filter(datasetName::equalsIgnoreCase).collect(Collectors.toSet()).isEmpty();
+        currentPropertyName = name.strip().replaceAll(" ", "_");
+        boolean exists = !DATA_SET_NAMES.stream().filter(currentPropertyName::equalsIgnoreCase).collect(Collectors.toSet()).isEmpty();
 
         ObjectNode data;
         if (exists) {
-            data = Pref.getObjectNode(Config.DATASETS + "/" + datasetName);
+            data = Pref.getObjectNode(Config.PROPERTY_TYPES + "/" + currentPropertyName);
             if (data.isEmpty()) {
                 data = DEFAULT_DATA_OBJECT.deepCopy();
             }
@@ -592,15 +591,15 @@ public class EditPropertyTypes extends JDialog {
 
         tokenData = data;
         populateTable();
-        Pref.set(Config.DATASET_NAME, datasetName);
+        Pref.set(Config.CURRENT_PROPERTY_TYPE, currentPropertyName);
     }
 
     private final ItemListener dataSetListener = (e) -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
             saveTokenData();
-            String datasetName = (String) e.getItem();
-            defaultCheckBox.setSelected(datasetName.equalsIgnoreCase(Pref.getString(Config.DATASET_DEFAULT)));
-            loadTokenData(datasetName);
+            String currentPropertyName = (String) e.getItem();
+            defaultCheckBox.setSelected(currentPropertyName.equalsIgnoreCase(Pref.getString(Config.DEFAULT_PROPERTY_TYPE)));
+            loadTokenData(currentPropertyName);
         }
     };
 

@@ -3,6 +3,7 @@ package net.rptools.servers;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -36,6 +37,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +49,7 @@ import static java.lang.Thread.sleep;
 import static net.rptools.data.Constants.FALLBACK_TEMPLATE;
 import static net.rptools.data.Constants.OBJECT_MAPPER;
 import static net.rptools.data.TemplateData.TEMPLATE_DATA;
-import static net.rptools.data.config.Config.THEME;
+import static net.rptools.data.config.Config.CURRENT_THEME;
 
 public class OneServlet extends HttpServlet {
 
@@ -66,18 +68,20 @@ public class OneServlet extends HttpServlet {
     private static final Resource CLASSPATH_RESOURCE;
     private static final Resource TOKEN_IMAGES_RESOURCE;
 
-    private static final ObjectNode CSS_OBJECT = Pref.getObjectNode(Config.THEME_CSS);
-    private static String theme = Pref.getString(THEME);
-    private static String themeCSS = Pref.getObjectNode(Config.THEME_CSS).get(theme).asText();
+    private static final ObjectNode CSS_OBJECT = Pref.getObjectNode(Config.ALL_THEME_CSS);
+    private static String theme = Pref.getString(CURRENT_THEME);
+    private static String themeCSS = Pref.getObjectNode(Config.ALL_THEME_CSS).get(theme).asText();
     private static Server server;
     private static CompletableFuture<?> sseFuture = CompletableFuture.completedFuture(true);
     private static final String IMAGE_CYCLE_JAVASCRIPT_TEXT;
+    private static final ArrayNode TOKEN_IMAGE_URIS = OBJECT_MAPPER.createArrayNode();
     private static final ArrayNode TOKEN_IMAGES = OBJECT_MAPPER.createArrayNode();
     protected static final AtomicBoolean TEMPLATE_DATA_CHANGED = new AtomicBoolean(false);
     private static final Map<String, Double> AR_MAP = new HashMap<>();
     private static int imageIndex = 0;
     private static int initialHeight;
     private static int initialWidth;
+
     static {
         try {
             Utils.setHBHelpers(HANDLEBARS);
@@ -86,23 +90,28 @@ public class OneServlet extends HttpServlet {
             CLASSPATH_RESOURCE = new PathResourceFactory().newClassLoaderResource(RESOURCE_PATH);
             templateResource = new PathResourceFactory().newResource(Pref.getString(Config.TEMPLATE_FOLDER));
             TOKEN_IMAGES_RESOURCE = "/testPage/tokenImages".equals(Pref.getString(Config.TOKEN_IMAGES_FOLDER)) ?
-                    new PathResourceFactory().newClassLoaderResource(Pref.getString(Config.TOKEN_IMAGES_FOLDER)):
+                    new PathResourceFactory().newClassLoaderResource(Pref.getString(Config.TOKEN_IMAGES_FOLDER)) :
                     new PathResourceFactory().newResource(Pref.getString(Config.TOKEN_IMAGES_FOLDER));
 
             TOKEN_IMAGES_RESOURCE.getAllResources().forEach(resource -> {
-                if(!resource.isDirectory()){
+                if (!resource.isDirectory()) {
                     String path = "\"" + CLASSPATH_RESOURCE.getURI().relativize(resource.getURI()).toASCIIString() + "\"";
-                    try{
+                    ObjectNode imageObject = OBJECT_MAPPER.createObjectNode();
+                    imageObject.put("name", Path.of(path.replace("\"", "")).getFileName().toString());
+                    imageObject.put("uri", path);
+                    try {
                         BufferedImage bi = ImageIO.read(resource.newInputStream());
-                        AR_MAP.put(path, (double) (bi.getHeight()/bi.getWidth()));
+                        AR_MAP.put(path, (double) (bi.getHeight() / bi.getWidth()));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
 
-                    TOKEN_IMAGES.add(path);
+                    TOKEN_IMAGE_URIS.add(path);
+                    TOKEN_IMAGES.add(imageObject);
                 }
             });
-            TEMPLATE_DATA.set("tokenImageURIs", TOKEN_IMAGES);
+            TEMPLATE_DATA.set("tokenImages", TOKEN_IMAGE_URIS);
+            TEMPLATE_DATA.set("tokenImageObjects", TOKEN_IMAGES);
 
             Template imageCycle = PAGE_BARS.compile("imageCycle");
             Map<String, Object> map = OBJECT_MAPPER.readValue(TEMPLATE_DATA.toString(), MAP_TYPE_REFERENCE);
@@ -116,11 +125,12 @@ public class OneServlet extends HttpServlet {
             throw new RuntimeException(e);
         }
     }
+
     private static final java.util.List<Resource> RESOURCE_LIST = List.of(templateResource, CLASSPATH_RESOURCE, TOKEN_IMAGES_RESOURCE);
 
     public OneServlet(Server _server) {
         server = _server;
-        TOKEN_IMAGES.add(TEMPLATE_DATA.get("image"));
+        TOKEN_IMAGE_URIS.add(TEMPLATE_DATA.get("image"));
         initialHeight = TEMPLATE_DATA.get("portraitHeight").asInt();
         initialWidth = TEMPLATE_DATA.get("portraitWidth").asInt();
     }
@@ -138,27 +148,25 @@ public class OneServlet extends HttpServlet {
         }
         if (request.getRequestURI().startsWith("/api/image")) {
             try {
-                cycleImage(OBJECT_MAPPER.readTree(formString).get("cycle").asInt());
+                cycleImage(OBJECT_MAPPER.readTree(formString).get("currentTokenImage").asText());
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
-        } else
-        if (request.getRequestURI().startsWith("/api/folder")) {
+        } else if (request.getRequestURI().startsWith("/api/folder")) {
             try {
                 Desktop.getDesktop().browse(Pref.getPath(Config.TEMPLATE_FOLDER).toUri());
             } catch (IOException ex) {
                 Alerts.whoops(ex);
             }
-        } else
-        if (request.getRequestURI().startsWith("/api")) {
-             if (!formString.equals("{}")) {
-                 try {
-                     OneServlet.TEMPLATE_UPDATER.readValue(formString);
-                     TemplateData.filterProperties();
-                 } catch (JsonProcessingException e) {
-                     throw new RuntimeException(e);
-                 }
-             }
+        } else if (request.getRequestURI().startsWith("/api")) {
+            if (!formString.equals("{}")) {
+                try {
+                    OneServlet.TEMPLATE_UPDATER.readValue(formString);
+                    TemplateData.filterProperties();
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 
@@ -166,6 +174,14 @@ public class OneServlet extends HttpServlet {
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
         log.debug("OneServlet GET request -> {}", request.getRequestURI());
         Utils.commonResponseBits(response);
+        JsonNode barsNode = TEMPLATE_DATA.get(Config.BARS);
+        if (barsNode instanceof ObjectNode objectNode) {
+            objectNode.properties().forEach(nodeEntry -> {
+                if (nodeEntry instanceof ObjectNode barNode) {
+                    barNode.put("value", Math.random());
+                }
+            });
+        }
         String requestURI = request.getRequestURI().strip();
         if (requestURI.toLowerCase().endsWith(".hbs") || requestURI.equalsIgnoreCase("/sheet/default")) {
             getHandlebars(request, response);
@@ -186,7 +202,7 @@ public class OneServlet extends HttpServlet {
 //            }
 //        }
 //            else
-            {
+        {
             getFile(request, response);
         }
     }
@@ -230,12 +246,12 @@ public class OneServlet extends HttpServlet {
             cssNode.attr("href", "./css/mt-stat-sheet.css");
 
             var head = doc.head();
-            if(isSheet) {
+            if (isSheet) {
                 var baseNode = doc.createElement("base");
                 baseNode.attr("href", "./sheet");
                 head.insertChildren(0, baseNode);
 
-                if(request.getQueryString() != null) {
+                if (request.getQueryString() != null) {
                     var imageCycleNode = doc.createElement("script");
                     imageCycleNode.id("imageCycle");
                     imageCycleNode.html(IMAGE_CYCLE_JAVASCRIPT_TEXT);
@@ -347,15 +363,15 @@ public class OneServlet extends HttpServlet {
             return;
         }
         Resource resource = null;
-        for(Resource resource_ : RESOURCE_LIST){
-            if(resource_.equals(TOKEN_IMAGES_RESOURCE) && subPath.contains("tokenImages")) {
+        for (Resource resource_ : RESOURCE_LIST) {
+            if (resource_.equals(TOKEN_IMAGES_RESOURCE) && subPath.contains("tokenImages")) {
                 resource = TOKEN_IMAGES_RESOURCE.resolve(subPath.substring(subPath.indexOf("tokenImages") + 11));
-            } else if(resource_.equals(templateResource) && subPath.startsWith("sheet/")){
+            } else if (resource_.equals(templateResource) && subPath.startsWith("sheet/")) {
                 resource = templateResource.resolve(subPath.substring(6));
             } else {
                 resource = CLASSPATH_RESOURCE.resolve(subPath);
             }
-            if(resource.exists()){
+            if (resource.exists()) {
                 break;
             }
         }
@@ -392,27 +408,10 @@ public class OneServlet extends HttpServlet {
         }
     }
 
-    private void cycleImage(int direction){
-        int max = TOKEN_IMAGES.size() -1;
-        if(max == 0){
-            return;
-        }
-        imageIndex += direction;
-        if(imageIndex < 0){
-            imageIndex = max;
-        } else if(imageIndex > max){
-            imageIndex = 0;
-        }
-
-        TEMPLATE_DATA.put("image", TOKEN_IMAGES.get(imageIndex).asText());
-        if(imageIndex == 0){
-            TEMPLATE_DATA.put("portraitHeight", initialHeight);
-            TEMPLATE_DATA.put("portraitWidth", initialWidth);
-            TEMPLATE_DATA_CHANGED.set(true);
-        } else {
-            double AR = AR_MAP.get(TOKEN_IMAGES.get(imageIndex).asText());
-            TEMPLATE_DATA.put("portraitWidth", initialHeight * AR);
-        }
-
+    private void cycleImage(String imageUri) {
+        TEMPLATE_DATA.put("image", TOKEN_IMAGE_URIS.get(imageIndex).asText());
+        double AR = AR_MAP.get(imageUri);
+        TEMPLATE_DATA.put("portraitWidth", initialHeight * AR);
+        TEMPLATE_DATA_CHANGED.set(true);
     }
 }

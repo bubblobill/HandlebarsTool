@@ -1,6 +1,7 @@
 package net.rptools;
 
 import net.rptools.ui.Launcher;
+import net.rptools.util.ImportCampaign;
 
 public class Main {
     private static Launcher launcher;

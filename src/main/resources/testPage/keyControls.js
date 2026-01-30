@@ -16,8 +16,6 @@ window.addEventListener("load", function () {
             case "R": reload.click(); break;
             case "d":
             case "D": showData.click(); break;
-            case "[": document.getElementById("prev").click(); break;
-            case "]": document.getElementById("next").click(); break;
         };
     });
 });

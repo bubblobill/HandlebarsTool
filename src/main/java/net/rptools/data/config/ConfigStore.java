@@ -26,6 +26,7 @@ import static net.rptools.data.config.Config.*;
 public class ConfigStore {
     private static final Logger log = LoggerFactory.getLogger(ConfigStore.class);
     private static final Path FILE_PATH = Constants.USER_DIR.resolve(".config.json");
+    private static final Path DEFAULT_ASSETS_PATH = Constants.USER_DIR.resolve(".assets");
     private static final String DEFAULT_CONFIG_PATH = "/data/configData.json";
     private static final String THEME_CSS_PATH = "/data/themeCss.json";
     private static final String DEFAULT_DATASETS_PATH = "/data/tokenPropertyTypes.json";
@@ -43,13 +44,16 @@ public class ConfigStore {
         ObjectNode defaultsNode;
         try {
             defaultsNode = (ObjectNode) OBJECT_MAPPER.readTree(IOUtils.resourceToString(DEFAULT_CONFIG_PATH, StandardCharsets.UTF_8));
-            defaultsNode.set(Config.THEME_CSS, OBJECT_MAPPER.readTree(IOUtils.resourceToString(THEME_CSS_PATH, StandardCharsets.UTF_8)));
-            defaultsNode.set(DATASETS, OBJECT_MAPPER.readTree(IOUtils.resourceToString(DEFAULT_DATASETS_PATH, StandardCharsets.UTF_8)));
+            defaultsNode.set(Config.ALL_THEME_CSS, OBJECT_MAPPER.readTree(IOUtils.resourceToString(THEME_CSS_PATH, StandardCharsets.UTF_8)));
+            defaultsNode.set(PROPERTY_TYPES, OBJECT_MAPPER.readTree(IOUtils.resourceToString(DEFAULT_DATASETS_PATH, StandardCharsets.UTF_8)));
             defaultsNode.put(TEMPLATE_FOLDER, Constants.USER_DIR.toString());
-            ArrayNode datasetNames = OBJECT_MAPPER.createArrayNode();
-            defaultsNode.set(DATASET_NAMES, datasetNames);
-            defaultsNode.get(Config.DATASETS).properties().forEach(entry -> datasetNames.add(entry.getKey()));
-            defaultsNode.set(DATASET_NAME, datasetNames.get(0));
+            defaultsNode.put(LAST_IMPORT_PATH, Constants.USER_DIR.toString());
+            defaultsNode.put(ASSETS_FOLDER, DEFAULT_ASSETS_PATH.toString());
+            ArrayNode propertyTypeNames = OBJECT_MAPPER.createArrayNode();
+            defaultsNode.set(PROPERTY_TYPE_NAMES, propertyTypeNames);
+            defaultsNode.get(Config.PROPERTY_TYPES).properties().forEach(entry -> propertyTypeNames.add(entry.getKey()));
+            defaultsNode.set(CURRENT_PROPERTY_TYPE, propertyTypeNames.get(0));
+            defaultsNode.set(DEFAULT_PROPERTY_TYPE, propertyTypeNames.get(0));
         } catch (IOException e) {
             log.error(e.getLocalizedMessage(), e);
             defaultsNode = OBJECT_MAPPER.createObjectNode();
@@ -107,8 +111,8 @@ public class ConfigStore {
         if(ROOT.get(RESET).asBoolean()){
             reset();
         }
-        if(ROOT.get(DATASET_NAME).asText().isBlank()){
-            set(DATASET_NAME, getOrDefault(ROOT.get(DATASET_NAMES).get(0), ROOT.get(DATASET_DEFAULT).asText()));
+        if(ROOT.get(CURRENT_PROPERTY_TYPE).asText().isBlank()){
+            set(CURRENT_PROPERTY_TYPE, getOrDefault(ROOT.get(PROPERTY_TYPE_NAMES).get(0), ROOT.get(DEFAULT_PROPERTY_TYPE).asText()));
         }
         ROOT.properties().forEach(nodeEntry -> addKey(nodeEntry.getKey()));
     }
@@ -138,7 +142,7 @@ public class ConfigStore {
             return;
         }
         synchronized (ROOT) {
-            ROOT.remove(THEME_CSS);
+            ROOT.remove(ALL_THEME_CSS);
             synchronized (file) {
                 try {
                     if (Files.exists(file)) {
@@ -262,5 +266,8 @@ public class ConfigStore {
             }
         }
         save();
+    }
+    public static ObjectNode getDefaults(){
+        return DEFAULTS;
     }
 }

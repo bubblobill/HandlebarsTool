@@ -27,7 +27,6 @@ import java.beans.PropertyChangeEvent;
 import java.io.IOError;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -109,13 +108,13 @@ public class Launcher extends JDialog {
     }
 
     private void initThemeCombo() {
-        List<String> themeList = Pref.getList(Config.THEME_CSS);
+        List<String> themeList = Pref.getList(Config.ALL_THEME_CSS);
         ComboBoxModel<String> model = new DefaultComboBoxModel<>(themeList.toArray(String[]::new));
         themeCombo.setModel(model);
-        themeCombo.setSelectedItem(Pref.getString(Config.THEME));
+        themeCombo.setSelectedItem(Pref.getString(Config.CURRENT_THEME));
         themeCombo.addItemListener((il) -> {
             if (il.getStateChange() == ItemEvent.SELECTED) {
-                Pref.set(Config.THEME, il.getItem());
+                Pref.set(Config.CURRENT_THEME, il.getItem());
             }
         });
     }
@@ -124,13 +123,13 @@ public class Launcher extends JDialog {
         ComboBoxModel<Constants.StatSheetLocation> model = new DefaultComboBoxModel<>(Constants.StatSheetLocation.values());
         locationCombo.setModel(model);
         locationCombo.setSelectedItem(Arrays.stream(Constants.StatSheetLocation.values())
-                .filter(statSheetLocation -> statSheetLocation.className().equalsIgnoreCase(Pref.getString(Config.LOCATION)))
+                .filter(statSheetLocation -> statSheetLocation.className().equalsIgnoreCase(Pref.getString(Config.SHEET_LOCATION)))
                 .findFirst()
                 .orElse(Constants.StatSheetLocation.BOTTOM_LEFT));
         locationCombo.addItemListener((il) -> {
             if (il.getStateChange() == ItemEvent.SELECTED) {
                 Constants.StatSheetLocation location = (Constants.StatSheetLocation) il.getItem();
-                Pref.set(Config.LOCATION, location.className());
+                Pref.set(Config.SHEET_LOCATION, location.className());
             }
         });
     }
@@ -200,13 +199,13 @@ public class Launcher extends JDialog {
     public void onEditData() {
         EditPropertyTypes editPropertyTypes = new EditPropertyTypes();
         editPropertyTypes.setVisible(true);
-        List<String> datasetNames = Pref.getList(Config.DATASETS);
-        tokenDataset.setModel(new DefaultComboBoxModel<>(datasetNames.toArray(String[]::new)));
-        String selectName = Pref.getString(Config.DATASET_DEFAULT);
+        List<String> propertyTypeNames = Pref.getList(Config.PROPERTY_TYPES);
+        tokenDataset.setModel(new DefaultComboBoxModel<>(propertyTypeNames.toArray(String[]::new)));
+        String selectName = Pref.getString(Config.DEFAULT_PROPERTY_TYPE);
         if (selectName == null || selectName.isBlank()) {
-            selectName = Pref.getString(Config.DATASET_NAME);
+            selectName = Pref.getString(Config.CURRENT_PROPERTY_TYPE);
         }
-        if (datasetNames.contains(selectName)) {
+        if (propertyTypeNames.contains(selectName)) {
             tokenDataset.getModel().setSelectedItem(selectName);
         } else {
             tokenDataset.setSelectedIndex(-1);
@@ -266,6 +265,7 @@ public class Launcher extends JDialog {
                     if (tsTask != null && tsTask.state().equals(Future.State.RUNNING)) {
                         tsTask.cancel(true);
                     }
+
                     tsTask = threadPool.submit(new Thread(Servitude.serveRunnable.get()));
                     Future.State tsState = tsTask.state();
                     success = tsState.equals(Future.State.RUNNING);// && hbState.equals(Future.State.RUNNING);
@@ -298,11 +298,11 @@ public class Launcher extends JDialog {
 
 
     private void createUIComponents() {
-        List<String> datasetNames = Pref.getList(Config.DATASETS);
-        tokenDataset = new JComboBox<>(new DefaultComboBoxModel<>(datasetNames.toArray(String[]::new)));
+        List<String> propertyTypeNames = Pref.getList(Config.PROPERTY_TYPES);
+        tokenDataset = new JComboBox<>(new DefaultComboBoxModel<>(propertyTypeNames.toArray(String[]::new)));
         tokenDataset.addItemListener((il) -> {
             if (il.getStateChange() == ItemEvent.SELECTED) {
-                Pref.set(Config.DATASET_NAME, il.getItem());
+                Pref.set(Config.CURRENT_PROPERTY_TYPE, il.getItem());
             }
         });
     }

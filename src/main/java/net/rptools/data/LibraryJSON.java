@@ -28,7 +28,7 @@ public class LibraryJSON {
 
 
     static void createLibFile() {
-        if (!Pref.getBoolean(Config.LIB_FILE)) {
+        if (!Pref.getBoolean(Config.USE_ADD_ON_JSON_FILE)) {
             return;
         }
         if (Alerts.prompt(null, "Create associated Add-On JSON file in root folder?")) {
@@ -39,24 +39,24 @@ public class LibraryJSON {
             } catch (Exception e) {
                 Alerts.whoops(e);
                 log.error(e.getLocalizedMessage(), e);
-                Pref.set(Config.LIB_FILE, false);
+                Pref.set(Config.USE_ADD_ON_JSON_FILE, false);
             }
         } else {
-            Pref.set(Config.LIB_FILE, false);
+            Pref.set(Config.USE_ADD_ON_JSON_FILE, false);
         }
     }
 
     static void writeLibFile() {
-        if (!Pref.getBoolean(Config.LIB_FILE)) {
+        if (!Pref.getBoolean(Config.USE_ADD_ON_JSON_FILE)) {
             return;
         }
         try {
             OBJECT_MAPPER.writeValue(new FileOutputStream(jsonFilePath.toFile()), libObject);
-            Pref.set(Config.LIB_FILE, jsonFilePath);
+            Pref.set(Config.ADD_ON_FOLDER, jsonFilePath);
         } catch (Exception e) {
             Alerts.whoops(e);
             log.error(e.getLocalizedMessage(), e);
-            Pref.set(Config.LIB_FILE, false);
+            Pref.set(Config.USE_ADD_ON_JSON_FILE, false);
         }
     }
 
