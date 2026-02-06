@@ -31,7 +31,7 @@ public class Utils {
     public static Handlebars createHandlebars(TemplateLoader templateLoader) {
         Handlebars handlebars = new Handlebars(templateLoader);
         handlebars.setStringParams(true);
-        handlebars.setCharset(StandardCharsets.ISO_8859_1);
+        handlebars.setCharset(StandardCharsets.UTF_8);
         handlebars.parentScopeResolution(false);
         setHBHelpers(handlebars);
         return handlebars;
@@ -41,6 +41,7 @@ public class Utils {
         // ---- HELPERS ----
         handlebars.registerHelper("handlebars.logger.log", HBLogger.INSTANCE);
         handlebars.registerHelper(HelperRegistry.HELPER_MISSING, (_, options) -> new Handlebars.SafeString(options.fn.text()));
+        handlebars.registerHelper("markdown", MarkdownHelper.INSTANCE);
         handlebars.registerHelper("json", Jackson2Helper.INSTANCE);
         StringHelpers.register(handlebars);
         Arrays.stream(ConditionalHelpers.values()).forEach(h -> handlebars.registerHelper(h.name(), h));
@@ -48,7 +49,6 @@ public class Utils {
         handlebars.registerHelper(AssignHelper.NAME, AssignHelper.INSTANCE);
         handlebars.registerHelper(IncludeHelper.NAME, IncludeHelper.INSTANCE);
         Arrays.stream(MapToolHelpers.values()).forEach(h -> handlebars.registerHelper(h.name(), h));
-
     }
 
     public static void commonResponseBits(HttpServletResponse response) {
@@ -62,7 +62,7 @@ public class Utils {
     public static final Supplier<ErrorHandler> errorHandlerSupplier = () -> new ErrorHandler() {
         @Override
         protected void writeErrorHtmlHead(Request request, Writer writer, int code, String message) throws IOException {
-            writer.write("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\"/>\n");
+            writer.write("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/>\n");
             writer.write("<title>{{");
             writer.write(Integer.toString(code));
             writer.write("}}");
@@ -196,7 +196,7 @@ public class Utils {
             if (input == null) {
                 throw new FileNotFoundException(request.getServletPath() + uri);
             }
-            return IOUtils.toString(input, StandardCharsets.ISO_8859_1);
+            return IOUtils.toString(input, StandardCharsets.UTF_8);
         } finally {
             IOUtils.closeQuietly(input);
         }

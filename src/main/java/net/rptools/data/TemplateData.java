@@ -16,7 +16,7 @@ import static net.rptools.data.config.Config.*;
 
 public class TemplateData {
     private static final Logger log = LoggerFactory.getLogger(TemplateData.class);
-    public  static final ObjectNode TEMPLATE_DATA = Constants.OBJECT_MAPPER.createObjectNode();
+    public static final ObjectNode TEMPLATE_DATA = Constants.OBJECT_MAPPER.createObjectNode();
     private static final ObjectNode DATA_SETS = OBJECT_MAPPER.createObjectNode();
     private static String currentPropertyName = "";
     private static String viewAs = "";
@@ -46,7 +46,7 @@ public class TemplateData {
             TEMPLATE_DATA.setAll((ObjectNode) OBJECT_MAPPER.valueToTree(DATA_SETS.get(Pref.getString(CURRENT_PROPERTY_TYPE))));
 
             JsonNode barsNode = TEMPLATE_DATA.get(BARS);
-            if(barsNode instanceof ObjectNode objectNode) {
+            if (barsNode instanceof ObjectNode objectNode) {
                 objectNode.fieldNames().forEachRemaining(s -> {
                     JsonNode barNode = objectNode.get(s);
                     if (barNode instanceof ObjectNode objectNode_) {
@@ -70,6 +70,7 @@ public class TemplateData {
         }
         currentPropertyName = currentPropertyName_;
         viewAs = viewAs_;
+
         final ArrayNode properties = OBJECT_MAPPER.valueToTree(DATA_SETS.get(currentPropertyName_).get("properties"));
         List<JsonNode> availableProperties = StreamSupport.stream(properties.spliterator(), false)
                 .filter(prop ->
@@ -83,5 +84,16 @@ public class TemplateData {
         final ArrayNode out = OBJECT_MAPPER.createArrayNode();
         availableProperties.forEach(out::add);
         TEMPLATE_DATA.set("properties", out);
+
+        if (viewAs.equalsIgnoreCase("gm")) {
+            TEMPLATE_DATA.put("gm", "gm");
+            TEMPLATE_DATA.remove("player");
+        } else if (viewAs.equalsIgnoreCase("player")) {
+            TEMPLATE_DATA.put("player", "player");
+            TEMPLATE_DATA.remove("gm");
+        } else {
+            TEMPLATE_DATA.remove("gm");
+            TEMPLATE_DATA.remove("player");
+        }
     }
 }

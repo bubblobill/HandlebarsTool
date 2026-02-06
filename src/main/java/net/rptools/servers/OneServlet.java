@@ -20,6 +20,7 @@ import net.rptools.data.TemplateData;
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
 import net.rptools.util.Alerts;
+import net.rptools.util.JPath;
 import net.rptools.util.Utils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.server.Server;
@@ -78,7 +79,6 @@ public class OneServlet extends HttpServlet {
     private static final ArrayNode TOKEN_IMAGES = OBJECT_MAPPER.createArrayNode();
     protected static final AtomicBoolean TEMPLATE_DATA_CHANGED = new AtomicBoolean(false);
     private static final Map<String, Double> AR_MAP = new HashMap<>();
-    private static int imageIndex = 0;
     private static int initialHeight;
     private static int initialWidth;
 
@@ -95,9 +95,9 @@ public class OneServlet extends HttpServlet {
 
             TOKEN_IMAGES_RESOURCE.getAllResources().forEach(resource -> {
                 if (!resource.isDirectory()) {
-                    String path = "\"" + CLASSPATH_RESOURCE.getURI().relativize(resource.getURI()).toASCIIString() + "\"";
+                    String path = CLASSPATH_RESOURCE.getURI().relativize(resource.getURI()).toASCIIString();
                     ObjectNode imageObject = OBJECT_MAPPER.createObjectNode();
-                    imageObject.put("name", Path.of(path.replace("\"", "")).getFileName().toString());
+                    imageObject.put("name", Path.of(path).getFileName().toString());
                     imageObject.put("uri", path);
                     try {
                         BufferedImage bi = ImageIO.read(resource.newInputStream());
@@ -120,7 +120,7 @@ public class OneServlet extends HttpServlet {
                     .push(MapValueResolver.INSTANCE)
                     .build();
             IMAGE_CYCLE_JAVASCRIPT_TEXT = imageCycle.apply(context);
-            HANDLEBARS.setCharset(StandardCharsets.ISO_8859_1);
+            HANDLEBARS.setCharset(StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -409,9 +409,12 @@ public class OneServlet extends HttpServlet {
     }
 
     private void cycleImage(String imageUri) {
-        TEMPLATE_DATA.put("image", TOKEN_IMAGE_URIS.get(imageIndex).asText());
-        double AR = AR_MAP.get(imageUri);
-        TEMPLATE_DATA.put("portraitWidth", initialHeight * AR);
+        TEMPLATE_DATA.put("image", imageUri);
+        TEMPLATE_DATA.put("portrait", imageUri);
+        if(AR_MAP.containsKey(imageUri)) {
+            double AR = AR_MAP.get(imageUri);
+            TEMPLATE_DATA.put("portraitWidth", initialHeight * AR);
+        }
         TEMPLATE_DATA_CHANGED.set(true);
     }
 }

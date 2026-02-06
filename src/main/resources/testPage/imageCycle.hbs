@@ -3,7 +3,9 @@ var index = 0;
 var numPics = 0;
 
 const images = {};
-const imagePaths = {{{tokenImageURIs}}};
+{{#with this.tokenImages ~}}
+const imagePaths = JSON.parse('{{#json}}{{this}}{{/json}}');
+{{~/with}}
 const imageElement = document.querySelectorAll("img.portrait")[0];
 
 function setDimensions(width, height) {

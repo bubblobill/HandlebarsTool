@@ -31,7 +31,7 @@ A stand-alone tool for developing Handlebars templates for use with MapTool
         The default set of data used for generating templates. You will probably set it once and never need it again.
     </dd>
     <dt>The "Edit" button</dt>
-    <dd>Used for creating and changing datasets.</dd>
+    <dd>Used for creating and changing propertyTypes.</dd>
     <dt>Theme</dt>
     <dd>Which theme to use when delivering templates at start.</dd>
     <dt>Default Location</dt>
