@@ -12,9 +12,10 @@ body {
   display: grid;
   place-items: center;
 }
+#canvas{ position: fixed; z-index: -1; }
 .content {
   display: inline grid;
-  font-size: 16pt;
+  font-size: 14pt;
   column-gap: .6em;
   row-gap: .3em;
   grid-template-areas:
@@ -134,4 +135,11 @@ select {
     cursor: pointer;
     height: 1em;
     width: 1em;
+}
+
+.key-controls {
+    font-style: oblique;
+    font-weight: 300;
+    font-size: 70%;
+    vertical-align: top;
 }

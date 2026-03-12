@@ -123,6 +123,7 @@
   </component>
   <component name="uidesigner-configuration">
     <option name="INSTRUMENT_CLASSES" value="false" />
+    <option name="GENERATE_SOURCES_ON_SAVE" value="true" />
     <option name="USE_DYNAMIC_BUNDLES" value="true" />
   </component>
 </project>

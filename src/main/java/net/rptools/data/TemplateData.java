@@ -1,5 +1,6 @@
 package net.rptools.data;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -8,7 +9,11 @@ import net.rptools.data.config.Pref;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static net.rptools.data.Constants.OBJECT_MAPPER;
@@ -55,6 +60,7 @@ public class TemplateData {
                 });
             }
             TEMPLATE_DATA.set("themes", OBJECT_MAPPER.valueToTree(Pref.getList(ALL_THEME_CSS)));
+            filterVisible();
             return true;
         } catch (Exception e) {
             log.error(e.getLocalizedMessage(), e);
@@ -62,7 +68,7 @@ public class TemplateData {
         }
     }
 
-    public static void filterProperties() {
+    public static void filterVisible() {
         final String currentPropertyName_ = TEMPLATE_DATA.get(CURRENT_PROPERTY_TYPE).asText();
         final String viewAs_ = TEMPLATE_DATA.get(VIEW_AS).asText();
         if (currentPropertyName.equalsIgnoreCase(currentPropertyName_) && viewAs.equalsIgnoreCase(viewAs_)) {
@@ -70,6 +76,31 @@ public class TemplateData {
         }
         currentPropertyName = currentPropertyName_;
         viewAs = viewAs_;
+        boolean isGm = viewAs.equalsIgnoreCase("gm");
+
+        boolean isNpc = TEMPLATE_DATA.get("tokenType").asText().equalsIgnoreCase("npc");
+
+        final ObjectNode states = Pref.getObjectNode(STATES);
+        TEMPLATE_DATA.set("states", OBJECT_MAPPER.valueToTree(
+                states.propertyStream().filter(nodeEntry -> {
+                    if (nodeEntry.getValue() instanceof ObjectNode on) {
+                        return (isGm && on.get("showGM").asBoolean())
+                                || (on.get("showOthers").asBoolean() && viewAs.equalsIgnoreCase("player"))
+                                || (on.get("showOwner").asBoolean() && viewAs.equalsIgnoreCase("owner"));
+                    }
+                    return false;
+                }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
+
+        final ObjectNode bars = Pref.getObjectNode(BARS);
+        TEMPLATE_DATA.set("bars", OBJECT_MAPPER.valueToTree(
+                bars.propertyStream().filter(nodeEntry -> {
+                    if (nodeEntry.getValue() instanceof ObjectNode on) {
+                        return (isGm && on.get("showGM").asBoolean())
+                                || (on.get("showOthers").asBoolean() && viewAs.equalsIgnoreCase("player"))
+                                || (on.get("showOwner").asBoolean() && viewAs.equalsIgnoreCase("owner"));
+                    }
+                    return false;
+                }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
 
         final ArrayNode properties = OBJECT_MAPPER.valueToTree(DATA_SETS.get(currentPropertyName_).get("properties"));
         List<JsonNode> availableProperties = StreamSupport.stream(properties.spliterator(), false)
@@ -77,7 +108,7 @@ public class TemplateData {
                         (viewAs_.equalsIgnoreCase("player") &&
                                 !prop.get("gmOnly").asBoolean() && !prop.get("ownerOnly").asBoolean())
                                 || (viewAs_.equalsIgnoreCase("owner") && !prop.get("gmOnly").asBoolean())
-                                || viewAs_.equalsIgnoreCase("gm")
+                                || isGm
                 )
                 .toList();
 

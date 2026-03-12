@@ -13,6 +13,7 @@ import net.rptools.servers.Servitude;
 import net.rptools.util.Alerts;
 import net.rptools.util.WatchFolder;
 import net.rptools.util.Bones;
+import org.apache.commons.lang3.concurrent.FutureTasks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,10 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+
+import static net.rptools.data.Constants.State.*;
+import static net.rptools.servers.Servitude.serveRunnable;
 
 public class Launcher extends JDialog {
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
@@ -57,8 +62,8 @@ public class Launcher extends JDialog {
 
     private WatchFolder watchFolder;
 
-    private Future<?> tsTask;
-    final ExecutorService threadPool = Executors.newFixedThreadPool(2, Executors.defaultThreadFactory());
+    private FutureTask<?> tsTask;
+    private final ExecutorService executor = Executors.newFixedThreadPool(2);
     private URI uri;
 
     public Launcher() {
@@ -92,7 +97,7 @@ public class Launcher extends JDialog {
         setSelectedFolder();
 
         resetButton.addActionListener(_ -> onReset());
-        serverStart.addActionListener(_ -> onServerStart());
+        serverStart.addActionListener(_ -> toggleServer());
         buttonCancel.addActionListener(_ -> onCancel());
 
         // call onCancel() when cross is clicked
@@ -233,22 +238,37 @@ public class Launcher extends JDialog {
         uri = URI.create(String.format("http://localhost:%d/testPage.hbs", Pref.getInt(Config.SERVER_PORT)));
     }
 
-    private void onServerStart() {
-        boolean success = start();
+    private boolean serverStarted = false;
+    private void toggleServer() {
+//        if(serverStarted){
+//            serverStarted = stopServer();
+//            serverStart.setText("Start");
+//        } else {
+            serverStarted = start();
+            serverStart.setEnabled(!serverStarted);
+//        }
+        hyperlink.setEnabled(serverStarted);
 
-        hyperlink.setEnabled(success);
-
-        serverStart.setEnabled(!success);
-        changeButton.setEnabled(!success);
-        tokenDataset.setEnabled(!success);
+        changeButton.setEnabled(!serverStarted);
+        tokenDataset.setEnabled(!serverStarted);
 //        editButton.setEnabled(!success);
-        resetButton.setEnabled(!success);
-        createButton.setEnabled(!success);
-        port.setEnabled(!success);
-        themeCombo.setEnabled(!success);
-        locationCombo.setEnabled(!success);
+        resetButton.setEnabled(!serverStarted);
+        createButton.setEnabled(!serverStarted);
+        port.setEnabled(!serverStarted);
+        themeCombo.setEnabled(!serverStarted);
+        locationCombo.setEnabled(!serverStarted);
     }
 
+//    private boolean stopServer() {
+//          Doesn't work
+//        if (tsTask != null && tsTask.state().equals(Future.State.RUNNING)) {
+//            tsTask.cancel(true);
+//            Servitude.getInstance().stop();
+//            Future.State tsState = tsTask.state();
+//            return !tsState.equals(Future.State.RUNNING);
+//        }
+//        return false;
+//    }
     private boolean start() {
         boolean success = false;
         if (TemplateData.initialiseTemplateData()) {
@@ -266,7 +286,7 @@ public class Launcher extends JDialog {
                         tsTask.cancel(true);
                     }
 
-                    tsTask = threadPool.submit(new Thread(Servitude.serveRunnable.get()));
+                    tsTask = (FutureTask<?>) executor.submit(serveRunnable.get());
                     Future.State tsState = tsTask.state();
                     success = tsState.equals(Future.State.RUNNING);// && hbState.equals(Future.State.RUNNING);
                 }

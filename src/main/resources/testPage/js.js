@@ -1,28 +1,3 @@
-//establish Server-Sent Events connection
-var evtSource = new EventSource("/sse");
-//function reconnect(){
-//    if(evtSource.readyState == 2){
-//        evtSource = new EventSource("/sse");
-//        setTimeout(reconnect, 1500);
-//    }
-//}
-//evtSource.onerror = (event) => {
-//    console.error("EventSource failed: retry");
-//    reconnect();
-// };
-// Server-Side Events, i.e. updates
-evtSource.onmessage = (event) => {
-    console.log("refresh notification -> event.data: " + event.data);
-    const data = JSON.parse(event.data);
-    if(data["idle"]){
-    } else if(data["template-change"]){
-        reloadPage();
-    } else if(data["source-change"]){
-        reloadSheet();
-    }
-};
-
-
 
 const winBtn = document.getElementById("separate");
 const reloadBtn = document.getElementById("reload");
@@ -71,9 +46,12 @@ window.addEventListener("load", function () {
 
     winBtn.addEventListener("click", function (e) { link.click(); });
 
-    var evt = document.createEvent('HTMLEvents');
-    evt.initEvent("change", false, false);
-    sheetSelect.dispatchEvent(evt);
+    for(const sel of document.getElementsByTagName("select")){
+        var evt = document.createEvent('HTMLEvents');
+        evt.initEvent("change", false, false);
+        sel.dispatchEvent(evt);
+    }
+    drawMidLines();
 });
 
 function reloadSheet(){
@@ -95,5 +73,48 @@ function submitForm(fm){
         out[p[0]] = p[1];
     }
     fetch(fm.action, { method: "post", body: JSON.stringify(out) });
-    setTimeout(reloadSheet, 10);
+    setTimeout(reloadSheet, 80);
+}
+
+//establish Server-Sent Events connection
+var evtSource = new EventSource("/sse");
+function reconnect(){
+    if(evtSource.readyState == 2){
+        evtSource = new EventSource("/sse");
+        setTimeout(reconnect, 1500);
+    }
+}
+evtSource.onerror = (event) => {
+    console.error("EventSource failed: retry");
+    reconnect();
+ };
+// Server-Side Events, i.e. updates
+evtSource.onmessage = (event) => {
+    console.log("refresh notification -> event.data: " + event.data);
+    const data = JSON.parse(event.data);
+    if(data["idle"]){
+    } else if(data["template-change"]){
+        reloadPage();
+    } else if(data["source-change"]){
+        reloadSheet();
+    }
+};
+window.addEventListener("resize", (e)=> {drawMidLines();});
+function drawMidLines(){
+    const cvs = document.getElementById("canvas");
+    const height = window.innerHeight;
+    const width = window.innerWidth;
+    cvs.style.left = 0;
+    cvs.style.top = 0;
+    cvs.style.top = 0;
+    cvs.setAttribute("height", height);
+    cvs.setAttribute("width", width);
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, width, height);
+    ctx.beginPath();
+    ctx.moveTo(width / 2, 0);
+    ctx.lineTo(width / 2, height);
+    ctx.moveTo(0, height / 2);
+    ctx.lineTo(width, height / 2);
+    ctx.stroke();
 }

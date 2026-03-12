@@ -4,13 +4,14 @@ var numPics = 0;
 
 const images = {};
 {{#with this.tokenImages ~}}
-const imagePaths = JSON.parse('{{#json}}{{this}}{{/json}}');
+    const imagePaths = JSON.parse('{{#json}}{{this}}{{/json}}');
 {{~/with}}
 const imageElement = document.querySelectorAll("img.portrait")[0];
+const maxDim = Math.max(imageElement.width, imageElement.height);
 
 function setDimensions(width, height) {
-  root.style.setProperty("--portrait-width", width + "px");
-  root.style.setProperty("--portrait-height", height + "px");
+  root.style.setProperty("--portrait-width", (width/height * maxDim) + "px");
+  root.style.setProperty("--portrait-height", (height/width * maxDim) + "px");
 }
 
 function init(){

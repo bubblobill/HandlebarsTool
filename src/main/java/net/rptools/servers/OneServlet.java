@@ -20,7 +20,6 @@ import net.rptools.data.TemplateData;
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
 import net.rptools.util.Alerts;
-import net.rptools.util.JPath;
 import net.rptools.util.Utils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.server.Server;
@@ -84,8 +83,6 @@ public class OneServlet extends HttpServlet {
 
     static {
         try {
-            Utils.setHBHelpers(HANDLEBARS);
-            Utils.setHBHelpers(PAGE_BARS);
             PAGE_TEMPLATE = PAGE_BARS.compile(CLASS_PATH_TEMPLATE_LOADER.sourceAt("testPage"));
             CLASSPATH_RESOURCE = new PathResourceFactory().newClassLoaderResource(RESOURCE_PATH);
             templateResource = new PathResourceFactory().newResource(Pref.getString(Config.TEMPLATE_FOLDER));
@@ -162,7 +159,7 @@ public class OneServlet extends HttpServlet {
             if (!formString.equals("{}")) {
                 try {
                     OneServlet.TEMPLATE_UPDATER.readValue(formString);
-                    TemplateData.filterProperties();
+                    TemplateData.filterVisible();
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
@@ -413,6 +410,7 @@ public class OneServlet extends HttpServlet {
         TEMPLATE_DATA.put("portrait", imageUri);
         if(AR_MAP.containsKey(imageUri)) {
             double AR = AR_MAP.get(imageUri);
+            AR = AR != 0 ? AR : 1;
             TEMPLATE_DATA.put("portraitWidth", initialHeight * AR);
         }
         TEMPLATE_DATA_CHANGED.set(true);

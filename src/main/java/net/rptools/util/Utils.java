@@ -27,28 +27,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static net.rptools.util.HandlebarsHelpers.registerHelpers;
+
 public class Utils {
     public static Handlebars createHandlebars(TemplateLoader templateLoader) {
         Handlebars handlebars = new Handlebars(templateLoader);
         handlebars.setStringParams(true);
         handlebars.setCharset(StandardCharsets.UTF_8);
         handlebars.parentScopeResolution(false);
-        setHBHelpers(handlebars);
+        registerHelpers(handlebars);
         return handlebars;
-    }
-
-    public static void setHBHelpers(Handlebars handlebars) {
-        // ---- HELPERS ----
-        handlebars.registerHelper("handlebars.logger.log", HBLogger.INSTANCE);
-        handlebars.registerHelper(HelperRegistry.HELPER_MISSING, (_, options) -> new Handlebars.SafeString(options.fn.text()));
-        handlebars.registerHelper("markdown", MarkdownHelper.INSTANCE);
-        handlebars.registerHelper("json", Jackson2Helper.INSTANCE);
-        StringHelpers.register(handlebars);
-        Arrays.stream(ConditionalHelpers.values()).forEach(h -> handlebars.registerHelper(h.name(), h));
-        NumberHelper.register(handlebars);
-        handlebars.registerHelper(AssignHelper.NAME, AssignHelper.INSTANCE);
-        handlebars.registerHelper(IncludeHelper.NAME, IncludeHelper.INSTANCE);
-        Arrays.stream(MapToolHelpers.values()).forEach(h -> handlebars.registerHelper(h.name(), h));
     }
 
     public static void commonResponseBits(HttpServletResponse response) {

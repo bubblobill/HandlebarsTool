@@ -16,11 +16,15 @@ import org.eclipse.jetty.servlets.EventSourceServlet;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.resource.PathResourceFactory;
 import org.eclipse.jetty.util.resource.Resource;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.rmi.ServerException;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -35,6 +39,7 @@ public class Servitude {
     private final Resource CLASS_PATH_RESOURCE;
     protected final Server server;
     private static Servitude instance = null;
+
     public Servitude() {
         instance = this;
         try {
@@ -89,7 +94,7 @@ public class Servitude {
         state.set(Constants.State.READY);
     }
 
-    protected ContextHandler createContext(){
+    protected ContextHandler createContext() {
         ServletHolder oneServletHolder = new ServletHolder("OneServlet", new OneServlet(server));
         ServletHolder sseServletHolder = new ServletHolder("SSEServlet", new EventSourceServlet() {
             @Override
@@ -99,10 +104,10 @@ public class Servitude {
                     public void onOpen(Emitter emitter_) throws IOException {
                         EventSourceServlet.EventSourceEmitter emitter = (EventSourceServlet.EventSourceEmitter) emitter_;
                         String dataString;
-                        if(SheetsObject.getWatchChange()){
+                        if (SheetsObject.getWatchChange()) {
                             dataString = "{\"source-change\":true, \"template-change\":false, \"idle\": false}";
                             SheetsObject.setWatchChange(false);
-                        } else if(TEMPLATE_DATA_CHANGED.get()) {
+                        } else if (TEMPLATE_DATA_CHANGED.get()) {
                             dataString = "{\"source-change\":false, \"template-change\":true, \"idle\": false}";
                             TEMPLATE_DATA_CHANGED.set(false);
                         } else {
@@ -111,7 +116,10 @@ public class Servitude {
                         log.debug(dataString);
                         emitter.data(dataString);
                     }
-                    @Override public void onClose() { }
+
+                    @Override
+                    public void onClose() {
+                    }
                 };
             }
         });
@@ -166,11 +174,22 @@ public class Servitude {
     public void stop() {
         try {
             server.stop();
+            int count = 15;
+            while (server.isStopping() && count > 0) {
+                wait(100);
+                count--;
+            }
+            if (server.isStopping()) {
+                getServer().getScheduler().stop();
+                wait(100);
+            }
+            if (server.isStopping()) {
+                throw new ServerException("Exceeded timeout");
+            }
         } catch (Exception ex) {
             log.warn("Can't stop the Testing server", ex);
         }
     }
-
 
     public static final Supplier<Runnable> serveRunnable = () -> () -> {
         Servitude servitude = new Servitude();
@@ -183,7 +202,8 @@ public class Servitude {
             throw new RuntimeException(e);
         }
     };
-    public static Servitude getInstance(){
+
+    public static Servitude getInstance() {
         return instance;
     }
 }

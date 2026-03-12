@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="stylesheet" href="testPage.css">
     <link rel="stylesheet" href="brushedMetal.css">
+
     </head>
 <body>
     <div style="display:none;">
@@ -17,6 +18,7 @@
     <form id="fm_location" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
     <form id="fm_sheet" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
     <form id="fm_dataset" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
+    <form id="fm_pcNpc" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
     <form id="fm_view" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
     <form id="fm_background" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
     <form id="fm_theme" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
@@ -45,7 +47,7 @@
         <table class="ga s">
             <tr>
                 <td>
-                    <label for="sheet" title="{{source}}"><u>S</u>heet</label>
+                    <label for="sheet" title="{{source}}">Sh<u><b>e</b></u>et <span class="key-controls">([/])</span></label>
                     <input type="hidden" form="fm_folder" name="openFolder" value="{{source}}">
                     <button form="fm_folder" id="openFolder" class="openButton">
                         <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="1em" height="1em" viewBox="0 0 16 16"><path d="M 9 2 L 9 3 L 12.292969 3 L 6.023438 9.273438 L 6.726563 9.976563 L 13 3.707031 L 13 7 L 14 7 L 14 2 Z M 4 4 C 2.894531 4 2 4.894531 2 6 L 2 12 C 2 13.105469 2.894531 14 4 14 L 10 14 C 11.105469 14 12 13.105469 12 12 L 12 7 L 11 8 L 11 12 C 11 12.550781 10.550781 13 10 13 L 4 13 C 3.449219 13 3 12.550781 3 12 L 3 6 C 3 5.449219 3.449219 5 4 5 L 8 5 L 9 4 Z"></path>
@@ -55,7 +57,7 @@
             </tr>
             <tr>
                 <td>
-                    <select id="sheet" form="fm_sheet" name="sheet" class="submit-on-change" size="17">
+                    <select id="sheet" form="fm_sheet" name="sheet" class="submit-on-change" size="32">
                         {{#if sheets~}}
                             {{#each sheets~}}
                                 <option value="{{this.entry}}"
@@ -69,28 +71,33 @@
 
         <table class="ga op">
             <tr>
-                <td><label for="reload" class="c15">Reload Sheet</label></td>
-                <td><button id="reload" class="c25"><u>R</u>eload</button></td>
+                <td><label for="npc">NPC(n)</label><input type="radio" form="fm_pcNpc" name="tokenType" value="npc" id="npc" {{#eq tokenType "npc"}}checked="checked"{{/eq}} class="submit-on-change"/></td>
+                <td><input type="radio" form="fm_pcNpc" name="tokenType" value="pc" id="pc" {{#eq tokenType "pc"}}checked="checked"{{/eq}} class="submit-on-change"/><label for="pc">PC(m)</label></td>
             </tr>
             <tr>
-                <td><label for="separate" class="c10">New Window</label></td>
+                <td><label for="reload" class="c15"><u><b>R</b></u>eload Sheet</label></td>
+                <td><button id="reload" class="c25"><u><b>R</b></u>eload</button></td>
+            </tr>
+            <tr>
+                <td><label for="separate" class="c10">New Wind<u>o</u>w</label></td>
                 <td><button id="separate" class="c20"><u>O</u>pen</button></td>
             </tr>
+
             <tr>
                 <td><label class="c11">View<input type="text" class="hidden" id="quietYou"></label></td>
-                <td><input type="radio" form="fm_view" name="viewAs" value="gm"     id="gm" {{#eq viewAs "gm"}}checked="checked"{{/eq}} class="submit-on-change"/><label for="gm">GM</label></td>
+                <td><input type="radio" form="fm_view" name="viewAs" value="gm"     id="gm" {{#eq viewAs "gm"}}checked="checked"{{/eq}} class="submit-on-change"/><label for="gm">GM(g)</label></td>
             </tr>
             <tr>
                 <td></td>
-                <td><input type="radio" form="fm_view" name="viewAs" value="owner"  id="ov" {{#eq viewAs "owner"}}checked="checked"{{/eq}} class="submit-on-change"/><label for="ov">Owner</label></td>
+                <td><input type="radio" form="fm_view" name="viewAs" value="owner"  id="ov" {{#eq viewAs "owner"}}checked="checked"{{/eq}} class="submit-on-change"/><label for="ov">Owner(h)</label></td>
             </tr>
             <tr>
                 <td></td>
-                <td><input type="radio" form="fm_view" name="viewAs" value="player" id="pv" {{#eq viewAs "player"}}checked="checked"{{/eq}} class="submit-on-change"><label for="pv">Player</label></td>
+                <td><input type="radio" form="fm_view" name="viewAs" value="player" id="pv" {{#eq viewAs "player"}}checked="checked"{{/eq}} class="submit-on-change"><label for="pv">Player(j)</label></td>
             </tr>
             {{#if tokenImageObjects}}
             <tr>
-                <td><label for="currentTokenImage" class="c12">Token Image</label></td>
+                <td><label for="currentTokenImage" class="c12">Token Image <span class="key-controls">(q/w)</span></label></td>
                 <td>
                 <select id="currentTokenImage" form="fm_image" name="currentTokenImage" class="c22 submit-on-change">
                     {{#each tokenImageObjects~}}
@@ -101,7 +108,7 @@
             </tr>
             {{/if}}
             <tr>
-                <td><label for="currentPropertyName" class="c12">Data-Set</label></td>
+                <td><label for="currentPropertyName" class="c12">Data-Set <span class="key-controls">(a/s)</span></label></td>
                 <td>
                     <select id="currentPropertyName" form="fm_dataset" name="currentPropertyName" class="c22 submit-on-change">
                         {{#if propertyTypeNames}}
@@ -113,7 +120,7 @@
                 </td>
             </tr>
             <tr>
-                <td><label for="bg" class="c13">Background</label></td>
+                <td><label for="bg" class="c13">Background <span class="key-controls">(z/x)</span></label></td>
                 <td>
                     <select id="bg" form="fm_background" name="background" class="c23">
                         <option value="Textures/Arid.jpg"        {{#eq background  "Textures/Arid.jpg"       }}selected="selected"{{/eq}}>Arid</option        >
@@ -131,7 +138,7 @@
                 </td>
             </tr>
             <tr>
-                <td><label for="theme" class="c14">Theme</label></td>
+                <td><label for="theme" class="c14">Theme <span class="key-controls">(t/y)</span></label></td>
                 <td>
                     <select id="theme" form="fm_theme" name="theme" class="c24 submit-on-change">
                         {{#if themes}}
@@ -144,11 +151,12 @@
             </tr>
         </table>
 
-        <button id="showData"><u>D</u>ata</button>
+        <button id="showData"><u><b>D</b></u>ata</button>
     </div>
     <iframe id="overlay" src=""></iframe>
     <script src="js.js" defer></script>
-    <script src="keyControls.js" defer></script>
+    <script src="keyControls.js"></script>
     <div id="data">{{#json this}}{{/json}}</div>
+    <canvas id="canvas"></canvas>
 </body>
 </html>
