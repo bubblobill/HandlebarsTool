@@ -24,6 +24,7 @@
     <form id="fm_theme" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
     <form id="fm_folder" method="dialog" action="/api/folder" enctype="application/x-www-form-urlencoded"></form>
     <form id="fm_image" method="dialog" action="/api/image" enctype="application/x-www-form-urlencoded"></form>
+    <form id="fm_portrait" method="dialog" action="/api" enctype="application/x-www-form-urlencoded"></form>
     </div>
     <div class="content">
         <table id="pad">
@@ -73,6 +74,13 @@
             <tr>
                 <td><label for="npc">NPC(n)</label><input type="radio" form="fm_pcNpc" name="tokenType" value="npc" id="npc" {{#eq tokenType "npc"}}checked="checked"{{/eq}} class="submit-on-change"/></td>
                 <td><input type="radio" form="fm_pcNpc" name="tokenType" value="pc" id="pc" {{#eq tokenType "pc"}}checked="checked"{{/eq}} class="submit-on-change"/><label for="pc">PC(m)</label></td>
+            </tr>
+            <tr>
+                <td><label for="showPortrait">Show Portra<b>i</b>t</label>
+                    <input type="hidden" form="fm_portrait" name="showPortrait" value="false">
+                </td>
+
+                <td><input type="checkbox" form="fm_portrait" name="showPortrait" id="showPortrait" {{#if portrait}}checked="checked"{{/if}} class="submit-on-change"/></td>
             </tr>
             <tr>
                 <td><label for="reload" class="c15"><u><b>R</b></u>eload Sheet</label></td>

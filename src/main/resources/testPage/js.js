@@ -73,7 +73,7 @@ function submitForm(fm){
         out[p[0]] = p[1];
     }
     fetch(fm.action, { method: "post", body: JSON.stringify(out) });
-    setTimeout(reloadSheet, 80);
+    setTimeout(reloadSheet, 8);
 }
 
 //establish Server-Sent Events connection

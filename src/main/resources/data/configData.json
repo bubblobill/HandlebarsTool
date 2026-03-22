@@ -11,6 +11,7 @@
   "theme" : "Aah",
   "useLibFile" : false,
   "statSheetLocation" : "statSheet-bottomLeft",
+  "showPortrait": true,
   "viewAs" : "player",
   "watchFolder" : true,
   "states": {},

@@ -4,15 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import net.rptools.data.config.Config;
 import net.rptools.data.config.Pref;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -25,6 +23,7 @@ public class TemplateData {
     private static final ObjectNode DATA_SETS = OBJECT_MAPPER.createObjectNode();
     private static String currentPropertyName = "";
     private static String viewAs = "";
+    private static Map<String, String> portraitInfo = new HashMap<>();
     private static final List<String> IGNORE = List.of(
             ADD_ON_FOLDER,
             ASSETS_FOLDER,
@@ -50,6 +49,11 @@ public class TemplateData {
             }
             TEMPLATE_DATA.setAll((ObjectNode) OBJECT_MAPPER.valueToTree(DATA_SETS.get(Pref.getString(CURRENT_PROPERTY_TYPE))));
 
+            portraitInfo.put("portrait", TEMPLATE_DATA.get("portrait").asText());
+            portraitInfo.put("image", TEMPLATE_DATA.get("image").asText());
+            portraitInfo.put("portraitHeight", TEMPLATE_DATA.get("portraitHeight").asText());
+            portraitInfo.put("portraitWidth", TEMPLATE_DATA.get("portraitWidth").asText());
+
             JsonNode barsNode = TEMPLATE_DATA.get(BARS);
             if (barsNode instanceof ObjectNode objectNode) {
                 objectNode.fieldNames().forEachRemaining(s -> {
@@ -71,6 +75,21 @@ public class TemplateData {
     public static void filterVisible() {
         final String currentPropertyName_ = TEMPLATE_DATA.get(CURRENT_PROPERTY_TYPE).asText();
         final String viewAs_ = TEMPLATE_DATA.get(VIEW_AS).asText();
+        if(TEMPLATE_DATA.get(SHOW_PORTRAIT).asBoolean() || TEMPLATE_DATA.get(SHOW_PORTRAIT).asText().equalsIgnoreCase("on")){
+            if(!TEMPLATE_DATA.has("portrait")){
+                for(String key: portraitInfo.keySet()){
+                    TEMPLATE_DATA.set(key, new TextNode(portraitInfo.get(key)));
+                }
+            }
+        } else {
+            if(TEMPLATE_DATA.has("portrait")){
+                for(String key: portraitInfo.keySet()){
+                    portraitInfo.put(key, TEMPLATE_DATA.get(key).asText());
+                    TEMPLATE_DATA.remove(key);
+                }
+            }
+        }
+
         if (currentPropertyName.equalsIgnoreCase(currentPropertyName_) && viewAs.equalsIgnoreCase(viewAs_)) {
             return;
         }

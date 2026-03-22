@@ -80,6 +80,7 @@ public class OneServlet extends HttpServlet {
     private static final Map<String, Double> AR_MAP = new HashMap<>();
     private static int initialHeight;
     private static int initialWidth;
+    private static boolean debounce;
 
     static {
         try {
@@ -135,6 +136,10 @@ public class OneServlet extends HttpServlet {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
+        if(TEMPLATE_DATA_CHANGED.get()){
+            return;
+        }
+        TEMPLATE_DATA_CHANGED.set(true);
         log.debug("POST Request - > {}", request.getRequestURI());
         String formString = null;
         try (BufferedReader reader = request.getReader()) { // try-with-resources auto-closes the reader
@@ -165,6 +170,7 @@ public class OneServlet extends HttpServlet {
                 }
             }
         }
+        TEMPLATE_DATA_CHANGED.set(false);
     }
 
     @Override

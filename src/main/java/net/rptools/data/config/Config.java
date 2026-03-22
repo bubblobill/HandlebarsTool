@@ -10,6 +10,7 @@ public class Config {
     public static final String BACKGROUND = "background";
     public static final String VIEW_AS = "viewAs";
     public static final String BARS = "bars";
+    public static final String SHOW_PORTRAIT = "showPortrait";
     public static final String STATES = "states";
     public static final String CURRENT_PROPERTY_TYPE = "currentPropertyName";
     public static final String PROPERTY_TYPE_NAMES = "propertyTypeNames";

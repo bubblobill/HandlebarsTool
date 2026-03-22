@@ -178,6 +178,7 @@ public class Pref {
         PROPERTY_TYPES       ("propertyTypes",       ObjectNode.class, ObjectNode.class),
         CURRENT_SHEET_NAME   ("sheet",               ValueNode.class,  String.class),
         SHEET_LOCATION       ("statSheetLocation",   ValueNode.class,  Constants.StatSheetLocation.class),
+        SHOW_PORTRAIT        ("showPortrait",        ValueNode.class,  Boolean.class),
         SERVER_PORT          ("serverPort",          ValueNode.class,  Integer.class),
         ADD_ON_FOLDER        ("addonFolder",         ValueNode.class,  Path.class),
         USE_ADD_ON_JSON_FILE ("useLibFile",          ValueNode.class,  Boolean.class),

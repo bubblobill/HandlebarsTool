@@ -6,6 +6,7 @@ window.addEventListener("keydown", function (event) {
             case "g": document.getElementById("gm").checked = true; fireEvent(document.getElementById("gm")); break;
             case "h": document.getElementById("ov").checked = true; fireEvent(document.getElementById("ov")); break;
             case "j": document.getElementById("pv").checked = true; fireEvent(document.getElementById("pv")); break;
+            case "i": document.getElementById("pv").checked = true; fireEvent(document.getElementById("showPortrait")); break;
             case "n": document.getElementById("npc").checked = true; fireEvent(document.getElementById("npc")); break;
             case "m": document.getElementById("pc").checked = true; fireEvent(document.getElementById("pc")); break;
             case "o": winBtn.click(); break;
